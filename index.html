@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#faf8f3">
+<title>중간고사 플래너</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="wrap">
+  <div class="head"><h1>📚 중간고사 플래너</h1><div class="now" id="now"></div></div>
+  <div class="bar-label"><span>전체 계획 진행도</span><span id="allpct"></span></div>
+  <div class="bar"><i id="allbar"></i></div>
+  <main id="view"></main>
+</div>
+<nav class="nav" id="nav">
+  <button data-tab="today"><span>☀️</span>오늘</button>
+  <button data-tab="cal"><span>📅</span>달력</button>
+  <button data-tab="subj"><span>📖</span>과목</button>
+  <button data-tab="check"><span>✅</span>체크리스트</button>
+  <button data-tab="more"><span>⚙️</span>기타</button>
+</nav>
+
+<script src="app.js"></script>
+</body>
+</html>
