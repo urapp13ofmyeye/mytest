@@ -99,6 +99,7 @@ const AUTH_ERR = [
   [/valid email|invalid format|Unable to validate email/i, '이메일 형식이 올바르지 않아요.'],
   [/rate limit|too many/i, '시도가 너무 많아요. 잠시 뒤에 다시 해주세요.'],
   [/Email not confirmed/i, '이메일 인증이 필요한 설정이에요. 관리자에게 알려주세요.'],
+  [/(signups?|logins?) (are |is )?(disabled|not allowed)|provider is not enabled/i, '서버에서 이메일 로그인이 꺼져 있어요. 관리자에게 알려주세요.'],
 ];
 const authErr = m => (AUTH_ERR.find(([re]) => re.test(m)) || [0, '문제가 생겼어요: ' + m])[1];
 
