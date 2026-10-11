@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#faf8f3">
+<meta name="theme-color" content="#faf8f3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161514" media="(prefers-color-scheme: dark)">
 <title>플래너</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
@@ -11,7 +12,7 @@
 <!-- 로그인 화면 -->
 <div class="authbox" id="auth" hidden>
   <form class="card" id="authform">
-    <h1>📚 플래너</h1>
+    <h1>플래너</h1>
     <h2 id="authtitle">로그인</h2>
     <label>이메일<input type="email" id="authemail" autocomplete="email" inputmode="email" required></label>
     <label>비밀번호 (6자 이상)<input type="password" id="authpw" minlength="6" autocomplete="current-password" required></label>
@@ -25,7 +26,7 @@
 <!-- 앱 본체 (로그인 후에 보임) -->
 <div id="app" hidden>
 <div class="wrap">
-  <div class="head"><h1 id="title">플래너</h1><div class="now"><span id="sync"></span> <span id="now"></span></div></div>
+  <div class="head"><h1 id="title">플래너</h1><div class="now"><span id="sync"></span><span id="now"></span></div></div>
   <div class="bar-label"><span>전체 계획 진행도</span><span id="allpct"></span></div>
   <div class="bar"><i id="allbar"></i></div>
   <main id="view"></main>

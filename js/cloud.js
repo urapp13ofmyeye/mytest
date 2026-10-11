@@ -5,12 +5,12 @@ const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJ
 let sb = null, user = null, dirty = false, pushTimer = null, authMode = 'login';
 
 const $ = id => document.getElementById(id);
-const SYNC_TEXT = { saving: '☁ 저장 중…', ok: '☁ 저장됨', error: '⚠ 저장 실패 (이 기기엔 저장됨)', off: '' };
+const SYNC_TEXT = { saving: '저장 중…', ok: '저장됨', error: '저장 실패 · 이 기기에만 저장됨', off: '' };
 let syncState = 'off';
 function setSync(s) {
   syncState = s;
-  const el = $('sync'); if (el) el.textContent = SYNC_TEXT[s] || '';
-  const el2 = $('syncmore'); if (el2) el2.textContent = SYNC_TEXT[s] || '☁ 동기화됨';
+  const el = $('sync'); if (el) el.textContent = s === 'error' ? '저장 실패' : '';
+  const el2 = $('syncmore'); if (el2) el2.textContent = SYNC_TEXT[s];
 }
 
 /* ── 저장 ── */
@@ -66,7 +66,6 @@ async function boot(u) {
   else if (r.error) setSync('error');
   else setSync('ok');
   $('auth').hidden = true; $('app').hidden = false;
-  importFromHash();
   startApp();
 }
 // 앱으로 돌아왔을 때 다른 기기에서 바꾼 내용을 가져옴

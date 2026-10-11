@@ -52,12 +52,6 @@ document.addEventListener('click', e => {
   else if (d.delc) { for (const k in S.custom) S.custom[k] = S.custom[k].filter(c => c.id !== d.delc); delete S.done[d.delc]; }
   else if (d.delitem) { const { list, i } = findItem(d.delitem); list.items = list.items.filter(x => x.id !== i); }
   else if (d.dellist) { if (!confirm('이 카테고리를 통째로 삭제할까요?')) return; S.lists = S.lists.filter(l => l.id !== d.dellist); }
-  else if (d.act === 'export') {
-    const box = document.getElementById('backup'); box.value = JSON.stringify(S); box.select();
-    (navigator.clipboard ? navigator.clipboard.writeText(box.value) : Promise.reject()).then(() => alert('복사했어요!'), () => alert('아래 코드를 직접 복사하세요.'));
-    return;
-  }
-  else if (d.act === 'import') { if (!importData(document.getElementById('backup').value, '붙여넣은')) return; }
   else if (d.act === 'filesave') {
     const a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([JSON.stringify(S)], { type: 'application/json' }));
@@ -65,13 +59,6 @@ document.addEventListener('click', e => {
     return;
   }
   else if (d.act === 'fileload') { document.getElementById('bkfile').click(); return; }
-  else if (d.act === 'link') {
-    if (location.protocol === 'file:') { alert('지금은 PC 안의 파일을 직접 연 상태라 링크를 다른 기기에서 열 수 없어요.\n배포한 주소(vercel.app)에서 열고 눌러주세요. 그 전에는 ② 파일이나 ③ 코드를 쓰세요.'); return; }
-    const url = location.origin + location.pathname + '#data=' + b64.enc(JSON.stringify(S));
-    if (navigator.share) navigator.share({ title: '플래너 데이터', url }).catch(() => {});
-    else (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => alert('링크를 복사했어요. 다른 기기로 보내서 열면 됩니다.'), () => prompt('이 링크를 복사하세요', url));
-    return;
-  }
   else if (d.act === 'logout') { if (confirm('로그아웃할까요? 내용은 계정에 저장돼 있어요.')) logout(); return; }
   else if (d.act === 'reset') { if (!confirm('체크·메모·체크리스트를 모두 처음 상태로 되돌릴까요?')) return; S = seed(); S.tab = 'more'; }
   else return;

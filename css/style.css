@@ -1,3 +1,9 @@
+@font-face {
+  font-family: 'JoseonGulim';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_20-04@1.0/ChosunGu.woff') format('woff');
+  font-weight: normal;
+  font-display: swap;
+}
 :root {
   --bg: #faf8f3; --card: #fff; --fg: #1a1714; --sub: #4a4640; --mute: #7a7470;
   --line: #ddd8cf; --soft: #ede9e1; --today: #7F77DD; --exam: #E24B4A; --exam-bg: #fff3f2;
@@ -12,7 +18,8 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { -webkit-text-size-adjust: 100%; }
 body {
-  font-family: 'Pretendard', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  font-family: 'JoseonGulim', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  word-break: keep-all; overflow-wrap: anywhere;
   background: var(--bg); color: var(--fg); font-size: 14px; line-height: 1.5;
   padding-bottom: calc(72px + env(safe-area-inset-bottom));
 }
@@ -300,3 +307,49 @@ form[data-bulkcard] textarea { min-height: 110px; }
 .emptybox { text-align: center; padding: 28px 16px; margin-top: 16px; }
 .emptybox b { display: block; font-size: 15px; margin-bottom: 6px; }
 .emptybox .btn { margin-top: 12px; }
+
+/* ══════════ 좁은 화면 다듬기: 글자가 밀리거나 넘치지 않게 ══════════ */
+/* 머리글: 제목이 길면 말줄임, 오른쪽 날짜는 줄어들지 않음 */
+.head { align-items: center; }
+.head h1 { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.head .now { flex: 0 0 auto; }
+#sync:not(:empty) { color: var(--exam); font-weight: 700; margin-right: 6px; }
+/* 양끝 정렬 줄: 길어지면 겹치지 않고 다음 줄로 */
+.bar-label, .nowh, .odh { flex-wrap: wrap; gap: 2px 10px; }
+.daynav { flex-wrap: wrap; }
+.daynav h2 { min-width: 0; }
+/* 버튼 글자는 줄바꿈하지 않음 */
+.btn, .daynav button, .odbox button, .wtabs button, .stabs button, .todobox button { white-space: nowrap; }
+.btn.danger { color: var(--exam); margin-left: auto; }
+.addrow { flex-wrap: wrap; }
+.addrow select { max-width: 40%; }
+.addrow input { flex: 1 1 120px; }
+/* 할 일 줄의 시간·이월 표시는 통째로 다음 줄로 넘어가게 */
+.row .body small { white-space: normal; display: inline-block; }
+/* 밀린 일: 버튼이 글자를 밀어내지 않게 줄을 나눔 */
+.odrow { flex-wrap: wrap; }
+.odrow > span:first-child { flex: 1 1 170px; }
+.odrow small { white-space: normal; }
+.odbtn { margin-left: auto; }
+/* D-day 카드, 단계 이름, 시간표 칸: 긴 글자도 칸 안에서 줄바꿈 */
+.dcard { max-width: 168px; }
+.stage span { max-width: 42%; }
+.stage div { min-width: 0; }
+.ttb, .ttb b { word-break: normal; overflow-wrap: anywhere; }
+.metacards .card { min-width: 0; }
+.metacards b { display: block; }
+.ov { min-width: 0; width: 100%; font: inherit; color: inherit; }
+.certrow .field { flex: 1 1 130px; }
+.list h3 { min-width: 0; }
+.item span { min-width: 0; }
+/* 계정 줄 */
+.acct { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 10px; font-size: 13px; margin-bottom: 6px; }
+.acct span { color: var(--mute); font-size: 12px; }
+/* 입력칸: 이름표가 두 줄이 돼도 칸 높이가 어긋나지 않게 아래로 맞춤 */
+.setrow { align-items: flex-end; gap: 8px 6px; }
+.setrow .chk { align-self: center; }
+.sect { line-height: 1.4; }
+/* 폰에서 입력칸을 누를 때 화면이 확대되지 않게 (16px 미만이면 iOS가 확대함) */
+@media (pointer: coarse) { input, select, textarea { font-size: 16px !important; } }
+/* 범위·유형 입력칸: 긴 내용도 잘리지 않고 여러 줄로 */
+textarea.infoin { display: block; resize: none; line-height: 1.45; field-sizing: content; min-height: 2.9em; overflow-wrap: anywhere; }

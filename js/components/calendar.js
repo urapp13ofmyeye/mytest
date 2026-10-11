@@ -23,7 +23,7 @@ function renderCal() {
       return `<div class="gcol${k === tk ? ' today' : ''}${ev.some(e => e.k === 'exam') ? ' examday' : ''}${k < tk ? ' past' : ''}">
         <div class="gh"${wd === 0 || wd === 6 ? ' style="color:var(--exam)"' : ''}>${DOW[wd]}</div>
         <div class="gd"${on ? ` data-day="${k}" data-go="today"` : ''}>${short(k)} ${k === tk ? '<span class="badge t">오늘</span>' : k > tk ? `<span class="badge h">${dday(k)}</span>` : ''}</div>
-        ${ev.map(e => `<div class="pill solid ${e.k}" style="--c:${e.k === 'exam' ? 'var(--exam)' : SUBJ[e.subj].c}">${e.k === 'exam' ? '📝' : '📌'} ${e.s} ${e.t}</div>`).join('')}
+        ${ev.map(e => `<div class="pill solid ${e.k}" style="--c:${e.k === 'exam' ? 'var(--exam)' : SUBJ[e.subj].c}">${e.k === 'exam' ? '📝' : '📌'} ${e.s} ${esc(e.t)}</div>`).join('')}
         ${cls.map(c => c.type === 'alba' ? `<div class="pill cls alba">${c.s}~${c.e} 💼 ${c.t}</div>` : `<div class="pill cls" style="--c:${SUBJ[c.subj].c}">${c.s}~${c.e} 🏫 ${SUBJ[c.subj].n} 수업</div>`).join('')}
         ${tasksOf(k).map(pill).join('')}
         ${(S.custom[k] || []).map(c => pill({ id: c.id, subj: c.subj, t: c.t })).join('')}
@@ -33,7 +33,7 @@ function renderCal() {
       const { ev, cls } = fixedOf(k), ts = tasksOf(k), h = ts.reduce((a, t) => a + t.h, 0);
       return `<div class="day${k === tk ? ' today' : ''}${ev.some(e => e.k === 'exam') ? ' examday' : ''}${k < tk ? ' past' : ''}">
         <h3 data-day="${k}" data-go="today">${label(k)} ${dayBadges(k)}<span class="hrs">${h ? '순공 ' + fmtH(h) : ''} ›</span></h3>
-        <div class="chips">${ev.map(e => `<span class="chip ${e.k}" style="--c:${SUBJ[e.subj].c}">${e.k === 'exam' ? '📝' : '📌'} ${e.s} ${e.t}</span>`).join('')}
+        <div class="chips">${ev.map(e => `<span class="chip ${e.k}" style="--c:${SUBJ[e.subj].c}">${e.k === 'exam' ? '📝' : '📌'} ${e.s} ${esc(e.t)}</span>`).join('')}
           ${cls.map(c => `<span class="chip cls" style="--c:${c.type === 'alba' ? OTHER_C : SUBJ[c.subj].c}">${c.s} ${c.type === 'alba' ? '💼 ' + c.t : '🏫 ' + SUBJ[c.subj].n}</span>`).join('')}</div>
         ${ts.map(t => taskRow(t, false)).join('')}
         ${(S.custom[k] || []).map(c => taskRow({ id: c.id, subj: c.subj, t: c.t, custom: 1 }, false)).join('')}

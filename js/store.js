@@ -23,7 +23,6 @@ function save() {
   if (typeof cloudPush === 'function') cloudPush();
 }
 const fmtTime = t => t ? new Date(t).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '기록 없음';
-const b64 = { enc: s => encodeURIComponent(btoa(unescape(encodeURIComponent(s)))), dec: s => decodeURIComponent(escape(atob(decodeURIComponent(s)))) };
 // 백업 데이터로 내용을 덮어씀 (확인 후). 성공하면 true
 function importData(text, src) {
   let v;
@@ -33,15 +32,6 @@ function importData(text, src) {
   applyPlan(S.plan); resetView();
   return true;
 }
-// 예전 방식(#data= 링크)으로 온 백업 처리. 로그인 후 cloud.js가 부름
-function importFromHash() {
-  if (location.hash.indexOf('#data=') !== 0) return;
-  let txt = null;
-  try { txt = b64.dec(location.hash.slice(6)); } catch (e) { alert('링크의 데이터가 올바르지 않아요.'); }
-  history.replaceState(null, '', location.pathname + location.search);
-  if (txt && importData(txt, '링크의')) save();
-}
-
 /* ══════════ 유틸 ══════════ */
 const pad = n => String(n).padStart(2, '0');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

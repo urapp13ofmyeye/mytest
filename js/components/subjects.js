@@ -57,7 +57,7 @@ function renderSubj() {
     <div class="metacards">
       <div class="card"><small>${f.kind ? '일정' : '시험일'}</small><b>${f.date ? `${f.exam} <span class="tag-exam">${dday(f.date)}</span>` : '<span class="todo">일정 없음</span>'}</b></div>
       ${Object.entries(FIELDS).map(([k, n]) => `<div class="card${infoTodo(id, k) ? ' need' : ''}"><small>${n}${infoTodo(id, k) ? ' · ❓ 확인 필요' : ''}</small>
-        <input class="infoin" data-info="${id}|${k}" value="${esc(infoVal(id, k))}" placeholder="공지 확인 후 여기에 입력" aria-label="${sj.full} ${n}"></div>`).join('')}
+        <textarea class="infoin" rows="2" data-info="${id}|${k}" placeholder="공지 확인 후 입력" aria-label="${sj.full} ${n}">${esc(infoVal(id, k))}</textarea></div>`).join('')}
       <div class="card"><small>계획된 공부 시간</small><b>${fmtH(p.tot)} (${ts.length}블록)</b></div>
     </div>
     ${f.tip ? `<div class="banner">💡 ${f.tip}</div>` : ''}

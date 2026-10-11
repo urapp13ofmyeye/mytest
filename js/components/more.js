@@ -1,33 +1,30 @@
 /* 기타 탭: 고정 시간표 · 자격증 · 백업 */
 /* ══════════ 렌더: 기타 ══════════ */
 function renderMore() {
-  return `<div class="sect">✏️ 내 일정</div>
-    <div class="card"><div class="tip">과목, 시간표, 시험, 공부 블록을 앱에서 직접 입력해요.</div>
-      <div class="addrow"><button class="btn pri" data-tab="setup">내 일정 설정 열기</button></div></div>
-    <div class="sect">👤 계정</div>
-    <div class="card"><div class="tip">로그인: <b>${user ? esc(user.email) : ''}</b> · <span id="syncmore">${SYNC_TEXT[syncState] || '☁ 동기화됨'}</span><br>내용은 계정에 자동 저장돼서 폰·PC 어디서든 같아요.</div>
-      <div class="addrow"><button class="btn" data-act="logout">로그아웃</button></div></div>
-    <div class="sect">🗓 고정 시간표</div>
+  return `<div class="sect">내 일정</div>
+    <div class="card"><div class="tip">과목, 시간표, 시험, 공부 계획을 여기서 입력하고 고쳐요.</div>
+      <div class="addrow"><button class="btn pri" data-tab="setup">내 일정 설정</button></div></div>
+    <div class="sect">고정 시간표</div>
     ${timetable()}
-    ${CERTS ? `<div class="sect">📜 ${CERTS.title}</div>
+    ${CERTS ? `<div class="sect">${CERTS.title}</div>
     <div class="card">
       ${CERTS.items.map(([id, n, g]) => `<div class="certrow"><b>${n}<br><small style="font-weight:400;color:var(--mute)">${g}</small></b>
         <input type="date" class="field" data-cert="${id}" value="${S.certs[id] || ''}" aria-label="${n} 시험일">
         <span class="badge h">${S.certs[id] ? ddayFull(S.certs[id]) : '시험일 입력'}</span></div>`).join('')}
       <div class="tip" style="margin-top:8px">${CERTS.note}</div>
     </div>` : ''}
-    <div class="sect">💾 백업 (선택)</div>
+    <div class="sect">계정</div>
     <div class="card">
-      <div class="tip">내용은 계정에 자동 저장돼요. 아래는 파일로 따로 보관하고 싶을 때만 쓰세요. 불러오면 지금 내용을 <b>덮어써요</b> (합쳐지지 않음).<br>마지막 변경: <b>${fmtTime(S.savedAt)}</b></div>
-      <div class="bk"><b>① 링크로 보내기</b><small>배포한 주소에서만 가능. 링크를 카톡 "나에게 보내기" 등으로 보내고 다른 기기에서 열면 끝.</small>
-        <div class="addrow"><button class="btn pri" data-act="link">링크 만들기</button></div></div>
-      <div class="bk"><b>② 파일로 옮기기</b><small>파일을 저장해 두면 백업도 돼요.</small>
-        <div class="addrow"><button class="btn" data-act="filesave">파일로 저장</button><button class="btn" data-act="fileload">파일에서 불러오기</button>
-          <input type="file" id="bkfile" accept=".json,application/json" class="sr" aria-label="백업 파일 선택"></div></div>
-      <div class="bk"><b>③ 코드 복사·붙여넣기</b>
-        <textarea class="field" id="backup" placeholder="여기에 백업 코드를 붙여넣기" aria-label="백업 코드"></textarea>
-        <div class="addrow"><button class="btn" data-act="export">코드 복사</button><button class="btn" data-act="import">코드 불러오기</button></div></div>
-      <div class="addrow"><button class="btn" data-act="reset" style="margin-left:auto;color:var(--exam)">전부 초기화</button></div>
+      <div class="acct"><b>${user ? esc(user.email) : ''}</b><span id="syncmore">${SYNC_TEXT[syncState]}</span></div>
+      <div class="tip">내용은 계정에 자동으로 저장돼요. 다른 기기에서도 같은 이메일로 로그인하면 이어서 볼 수 있어요.</div>
+      <div class="addrow"><button class="btn" data-act="logout">로그아웃</button></div>
+    </div>
+    <div class="sect">파일 백업</div>
+    <div class="card">
+      <div class="tip">혹시 모를 때를 위해 파일로 따로 보관할 수 있어요. 불러오면 지금 내용을 덮어써요.<br>마지막 변경: ${fmtTime(S.savedAt)}</div>
+      <div class="addrow"><button class="btn" data-act="filesave">파일로 저장</button><button class="btn" data-act="fileload">파일에서 불러오기</button>
+        <input type="file" id="bkfile" accept=".json,application/json" class="sr" aria-label="백업 파일 선택"></div>
+      <div class="addrow"><button class="btn danger" data-act="reset">체크·메모 초기화</button></div>
     </div>`;
 }
 function timetable() {

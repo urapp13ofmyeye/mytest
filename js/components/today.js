@@ -20,7 +20,7 @@ function timeline(k) {
   const rows = [
     ...cls.map(c => ({ s: c.s, html: `<div class="row" style="--c:${c.type === 'alba' ? OTHER_C : SUBJ[c.subj].c}"><div class="tm">${c.s}<br>${c.e}</div><div class="body">${c.type === 'alba' ? '💼 ' + c.t : '🏫 ' + c.t + ' 수업'}</div></div>` })),
     ...MEAL[toDate(k).getDay()].map(m => ({ s: m[0], html: `<div class="row meal"><div class="tm">${m[0]}<br>${m[1]}</div><div class="body">${m[2]}</div></div>` })),
-    ...ev.map(e => ({ s: e.s || '00:00', html: `<div class="row ${e.k}" style="--c:${SUBJ[e.subj].c}"><div class="tm">${e.s}<br>${e.e}</div><div class="body">${e.k === 'exam' ? '📝 ' : '📌 '}${e.t}${e.est ? '<small>수업시간 기준</small>' : ''}</div></div>` })),
+    ...ev.map(e => ({ s: e.s || '00:00', html: `<div class="row ${e.k}" style="--c:${SUBJ[e.subj].c}"><div class="tm">${e.s}<br>${e.e}</div><div class="body">${e.k === 'exam' ? '📝 ' : '📌 '}${esc(e.t)}${e.place ? ' · ' + esc(e.place) : ''}${e.est ? '<small>수업시간 기준</small>' : ''}${e.desc ? `<div style="font-weight:400;font-size:12px">${esc(e.desc)}</div>` : ''}</div></div>` })),
     ...tasksOf(k).map(t => ({ s: t.s || '99:99', html: taskRow(t, true) })),
   ].sort((a, b) => a.s < b.s ? -1 : a.s > b.s ? 1 : 0);
   const custom = (S.custom[k] || []).map(c => taskRow({ id: c.id, subj: c.subj, t: c.t, custom: 1 }, true)).join('');
@@ -39,7 +39,7 @@ function renderToday() {
   const marks = Object.keys(EVENTS).sort().flatMap(d => EVENTS[d].filter(e => e.mark).map(e => [d, e.subj, e.mark]));
   const h = tasksOf(k).reduce((a, t) => a + t.h, 0);
   return `<div class="dstrip">${marks.map(([d, s, n]) =>
-      `<div class="dcard${d < tk ? ' past' : ''}" style="--c:${SUBJ[s].c}"><b>${dday(d)}</b><span>${n}</span><small>${label(d)}</small></div>`).join('')}</div>
+      `<div class="dcard${d < tk ? ' past' : ''}" style="--c:${SUBJ[s].c}"><b>${dday(d)}</b><span>${esc(n)}</span><small>${label(d)}</small></div>`).join('')}</div>
     ${overdueBox()}${k === tk ? nowCard() : ''}
     <div class="daynav">
       <button data-day="${DATES[i - 1] || ''}"${i <= 0 ? ' disabled' : ''} aria-label="이전 날">◀</button>
