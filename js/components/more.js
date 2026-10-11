@@ -1,7 +1,13 @@
 /* 기타 탭: 고정 시간표 · 자격증 · 백업 */
 /* ══════════ 렌더: 기타 ══════════ */
 function renderMore() {
-  return `<div class="sect">🗓 고정 시간표</div>
+  return `<div class="sect">✏️ 내 일정</div>
+    <div class="card"><div class="tip">과목, 시간표, 시험, 공부 블록을 앱에서 직접 입력해요.</div>
+      <div class="addrow"><button class="btn pri" data-tab="setup">내 일정 설정 열기</button></div></div>
+    <div class="sect">👤 계정</div>
+    <div class="card"><div class="tip">로그인: <b>${user ? esc(user.email) : ''}</b> · <span id="syncmore">${SYNC_TEXT[syncState] || '☁ 동기화됨'}</span><br>내용은 계정에 자동 저장돼서 폰·PC 어디서든 같아요.</div>
+      <div class="addrow"><button class="btn" data-act="logout">로그아웃</button></div></div>
+    <div class="sect">🗓 고정 시간표</div>
     ${timetable()}
     ${CERTS ? `<div class="sect">📜 ${CERTS.title}</div>
     <div class="card">
@@ -10,9 +16,9 @@ function renderMore() {
         <span class="badge h">${S.certs[id] ? ddayFull(S.certs[id]) : '시험일 입력'}</span></div>`).join('')}
       <div class="tip" style="margin-top:8px">${CERTS.note}</div>
     </div>` : ''}
-    <div class="sect">💾 백업 · 기기 간 옮기기</div>
+    <div class="sect">💾 백업 (선택)</div>
     <div class="card">
-      <div class="tip">체크·메모·암기 카드는 <b>이 기기의 브라우저</b>에만 저장돼요. 다른 기기로 옮기면 그쪽 내용을 <b>덮어써요</b> (합쳐지지 않음).<br>이 기기 마지막 변경: <b>${fmtTime(S.savedAt)}</b></div>
+      <div class="tip">내용은 계정에 자동 저장돼요. 아래는 파일로 따로 보관하고 싶을 때만 쓰세요. 불러오면 지금 내용을 <b>덮어써요</b> (합쳐지지 않음).<br>마지막 변경: <b>${fmtTime(S.savedAt)}</b></div>
       <div class="bk"><b>① 링크로 보내기</b><small>배포한 주소에서만 가능. 링크를 카톡 "나에게 보내기" 등으로 보내고 다른 기기에서 열면 끝.</small>
         <div class="addrow"><button class="btn pri" data-act="link">링크 만들기</button></div></div>
       <div class="bk"><b>② 파일로 옮기기</b><small>파일을 저장해 두면 백업도 돼요.</small>

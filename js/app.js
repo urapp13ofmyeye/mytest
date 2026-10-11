@@ -1,13 +1,16 @@
 /* 탭 전환 · 화면 그리기 · 클릭/입력 처리 */
 /* ══════════ 렌더 루프 · 이벤트 ══════════ */
-const VIEWS = { today: renderToday, cal: renderCal, subj: renderSubj, check: renderCheck, more: renderMore };
+const VIEWS = { today: renderToday, cal: renderCal, subj: renderSubj, check: renderCheck, more: renderMore, setup: renderSetup };
 function render() {
+  if (!S) return;
   if (!VIEWS[S.tab]) S.tab = 'today';
+  document.title = CONFIG.title;
+  document.getElementById('title').textContent = CONFIG.icon + ' ' + CONFIG.title;
   const gw = document.querySelector('.gridwrap'), keep = gw ? gw.scrollLeft : null;
   document.getElementById('view').innerHTML = VIEWS[S.tab]();
   const ngw = document.querySelector('.gridwrap');
   if (ngw) { const t = ngw.querySelector('.today'); ngw.scrollLeft = keep != null ? keep : t ? t.offsetLeft - ngw.offsetLeft - 16 : 0; }
-  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === S.tab));
+  document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === (S.tab === 'setup' ? 'more' : S.tab)));
   const n = new Date(), p = progress();
   document.getElementById('now').textContent = `${n.getMonth() + 1}/${n.getDate()}(${DOW[n.getDay()]}) ${lastMark() ? ` · ${lastMark()[1]}까지 ${dday(lastMark()[0])}` : ''}`;
   document.getElementById('allpct').textContent = `${p.pct}% (${fmtH(p.dn)} / ${fmtH(p.tot)})`;
@@ -69,6 +72,7 @@ document.addEventListener('click', e => {
     else (navigator.clipboard ? navigator.clipboard.writeText(url) : Promise.reject()).then(() => alert('링크를 복사했어요. 다른 기기로 보내서 열면 됩니다.'), () => prompt('이 링크를 복사하세요', url));
     return;
   }
+  else if (d.act === 'logout') { if (confirm('로그아웃할까요? 내용은 계정에 저장돼 있어요.')) logout(); return; }
   else if (d.act === 'reset') { if (!confirm('체크·메모·체크리스트를 모두 처음 상태로 되돌릴까요?')) return; S = seed(); S.tab = 'more'; }
   else return;
   save(); render();
@@ -111,6 +115,5 @@ document.addEventListener('submit', e => {
   }
   save(); render();
 });
-document.title = CONFIG.title;
-document.getElementById('title').textContent = CONFIG.icon + ' ' + CONFIG.title;
-render();
+function startApp() { render(); }
+cloudInit();

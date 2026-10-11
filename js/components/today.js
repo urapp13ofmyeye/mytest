@@ -34,6 +34,7 @@ function dayBadges(k) {
 }
 
 function renderToday() {
+  if (!DATES.length) return emptyState();
   const k = viewDay, i = DATES.indexOf(k), tk = todayKey();
   const marks = Object.keys(EVENTS).sort().flatMap(d => EVENTS[d].filter(e => e.mark).map(e => [d, e.subj, e.mark]));
   const h = tasksOf(k).reduce((a, t) => a + t.h, 0);

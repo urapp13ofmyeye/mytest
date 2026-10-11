@@ -8,8 +8,24 @@
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+<!-- 로그인 화면 -->
+<div class="authbox" id="auth" hidden>
+  <form class="card" id="authform">
+    <h1>📚 플래너</h1>
+    <h2 id="authtitle">로그인</h2>
+    <label>이메일<input type="email" id="authemail" autocomplete="email" inputmode="email" required></label>
+    <label>비밀번호 (6자 이상)<input type="password" id="authpw" minlength="6" autocomplete="current-password" required></label>
+    <button class="btn pri" id="authgo">로그인</button>
+    <p class="authmsg" id="authmsg" role="alert"></p>
+    <button type="button" class="linkbtn" id="authswitch">처음이에요 → 가입하기</button>
+    <p class="tip">가입하면 내 일정이 내 계정에 저장돼서, 폰과 PC 어디서든 같은 내용을 볼 수 있어요.</p>
+  </form>
+</div>
+
+<!-- 앱 본체 (로그인 후에 보임) -->
+<div id="app" hidden>
 <div class="wrap">
-  <div class="head"><h1 id="title">플래너</h1><div class="now" id="now"></div></div>
+  <div class="head"><h1 id="title">플래너</h1><div class="now"><span id="sync"></span> <span id="now"></span></div></div>
   <div class="bar-label"><span>전체 계획 진행도</span><span id="allpct"></span></div>
   <div class="bar"><i id="allbar"></i></div>
   <main id="view"></main>
@@ -21,9 +37,11 @@
   <button data-tab="check"><span>✅</span>체크리스트</button>
   <button data-tab="more"><span>⚙️</span>기타</button>
 </nav>
+</div>
 
-<!-- 학기 데이터: 다른 학기에 쓰려면 이 파일만 바꾸면 됩니다 -->
-<script src="data/semester.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 일정 틀 (일정 자체는 각자의 계정에 저장됨) -->
+<script src="data/defaults.js"></script>
 <!-- 공용 코드 -->
 <script src="js/store.js"></script>
 <script src="js/components/now.js"></script>
@@ -32,6 +50,8 @@
 <script src="js/components/subjects.js"></script>
 <script src="js/components/checklist.js"></script>
 <script src="js/components/more.js"></script>
+<script src="js/components/setup.js"></script>
+<script src="js/cloud.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

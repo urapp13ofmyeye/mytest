@@ -35,6 +35,8 @@ function cardSection(id) {
     </div>`;
 }
 function renderSubj() {
+  if (!Object.keys(INFO).length) return emptyState();
+  if (viewSubj !== 'all' && !INFO[viewSubj]) viewSubj = 'all';
   const tabs = `<div class="stabs"><button data-subj="all" class="${viewSubj === 'all' ? 'on' : ''}">전체 개요</button>${Object.keys(INFO).map(id =>
     `<button data-subj="${id}" class="${viewSubj === id ? 'on' : ''}" style="--c:${SUBJ[id].c}">${SUBJ[id].n}</button>`).join('')}</div>`;
   if (viewSubj === 'all') return tabs + (missing().length ? `<div class="todobox"><b>❓ 아직 확인 안 한 것 ${missing().reduce((a, m) => a + m[1].length, 0)}개</b>
@@ -43,8 +45,8 @@ function renderSubj() {
       const p = progress(t => t.subj === id);
       return `<button class="ov" data-subj="${id}" style="--c:${SUBJ[id].c}">
         <div class="nm">${SUBJ[id].full}</div>
-        <div class="dt">${f.exam} <span class="tag-exam">${f.kind || '시험'} ${dday(f.date)}</span></div>
-        <div class="tp">${infoShow(id, 'type')} · 범위: ${infoShow(id, 'range')}<br>${f.stages.map(s => s[0]).join(' → ')}</div>
+        <div class="dt">${f.date ? `${f.exam} <span class="tag-exam">${f.kind || '시험'} ${dday(f.date)}</span>` : '<span class="todo">시험·마감 일정 없음</span>'}</div>
+        <div class="tp">${infoShow(id, 'type')} · 범위: ${infoShow(id, 'range')}${f.stages.length ? '<br>' + f.stages.map(s => s[0]).join(' → ') : ''}</div>
         <div class="bar-label"><span>진행도</span><span>${p.pct}% · ${fmtH(p.dn)} / ${fmtH(p.tot)}</span></div>
         <div class="bar"><i style="width:${p.pct}%"></i></div></button>`;
     }).join('')}</div>
@@ -53,12 +55,12 @@ function renderSubj() {
   const id = viewSubj, f = INFO[id], sj = SUBJ[id], p = progress(t => t.subj === id), ts = allTasks().filter(t => t.subj === id);
   return tabs + `<div style="--c:${sj.c}">
     <div class="metacards">
-      <div class="card"><small>${f.kind ? '일정' : '시험일'}</small><b>${f.exam} <span class="tag-exam">${dday(f.date)}</span></b></div>
+      <div class="card"><small>${f.kind ? '일정' : '시험일'}</small><b>${f.date ? `${f.exam} <span class="tag-exam">${dday(f.date)}</span>` : '<span class="todo">일정 없음</span>'}</b></div>
       ${Object.entries(FIELDS).map(([k, n]) => `<div class="card${infoTodo(id, k) ? ' need' : ''}"><small>${n}${infoTodo(id, k) ? ' · ❓ 확인 필요' : ''}</small>
         <input class="infoin" data-info="${id}|${k}" value="${esc(infoVal(id, k))}" placeholder="공지 확인 후 여기에 입력" aria-label="${sj.full} ${n}"></div>`).join('')}
       <div class="card"><small>계획된 공부 시간</small><b>${fmtH(p.tot)} (${ts.length}블록)</b></div>
     </div>
-    <div class="banner">💡 ${f.tip}</div>
+    ${f.tip ? `<div class="banner">💡 ${f.tip}</div>` : ''}
     <div class="card">
       ${f.stages.map(s => `<div class="stage"><span>${s[0]}</span><div>${s[1]}</div></div>`).join('')}
       <div class="bar-label" style="margin-top:10px"><span>전체 진행도</span><span>${p.pct}% (${fmtH(p.dn)} / ${fmtH(p.tot)})</span></div>

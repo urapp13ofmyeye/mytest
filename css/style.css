@@ -273,3 +273,30 @@ form[data-bulkcard] textarea { min-height: 110px; }
 .bk { padding: 10px 0; border-top: 1px solid var(--soft); margin-top: 10px; }
 .bk b { display: block; font-size: 13px; }
 .bk small { display: block; font-size: 11.5px; color: var(--mute); }
+
+/* 로그인 화면 */
+.authbox { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+.authbox .card { width: 100%; max-width: 360px; display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+.authbox h1 { font-size: 20px; }
+.authbox h2 { font-size: 15px; color: var(--sub); }
+.authbox label { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; color: var(--sub); font-weight: 600; }
+.authbox input { border: 1.5px solid var(--line); background: var(--card); border-radius: 9px; padding: 11px 12px; font-size: 16px; font-weight: 400; color: var(--fg); }
+.authbox .btn { padding: 11px; font-size: 15px; }
+.authmsg { font-size: 12.5px; color: var(--exam); min-height: 18px; }
+.linkbtn { border: 0; background: none; color: var(--today); font-size: 13px; font-weight: 600; padding: 4px; }
+[hidden] { display: none !important; }
+
+/* 일정 설정 화면 */
+.setrow { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; align-items: center; }
+.setrow label { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: var(--mute); font-weight: 600; flex: 1 1 110px; min-width: 0; }
+.setrow label.grow { flex: 1 1 100%; }
+.setrow input, .setrow select { border: 1.5px solid var(--line); background: var(--card); border-radius: 9px; padding: 8px 10px; font-size: 16px; color: var(--fg); min-width: 0; width: 100%; font-weight: 400; }
+.setrow .chk { flex-direction: row; align-items: center; gap: 6px; flex: 1 1 auto; font-size: 13px; color: var(--sub); }
+.setrow .chk input { width: 18px; height: 18px; }
+.setlist .item { align-items: center; }
+.setlist .item > span { flex: 1; min-width: 0; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--c); margin-right: 6px; }
+.backrow { display: flex; align-items: center; gap: 8px; margin: 14px 0 0; }
+.emptybox { text-align: center; padding: 28px 16px; margin-top: 16px; }
+.emptybox b { display: block; font-size: 15px; margin-bottom: 6px; }
+.emptybox .btn { margin-top: 12px; }

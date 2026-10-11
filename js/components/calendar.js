@@ -9,6 +9,7 @@ function pill(t) {
     <b>${d ? '✓ ' : ''}${sj.n}${t.opt ? ' · 여유' : ''}</b><span>${esc(t.t)}${t.h ? ' · ' + fmtH(t.h) : ''}</span></label>`;
 }
 function renderCal() {
+  if (!DATES.length) return emptyState();
   const weeks = [...new Set(DATES.map(calWeek))], tk = todayKey(), grid = S.calMode !== 'list';
   const all = weekDays(viewWeek), days = all.filter(k => DATES.includes(k));
   const total = days.reduce((a, k) => a + tasksOf(k).reduce((x, t) => x + t.h, 0), 0);
