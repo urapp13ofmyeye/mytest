@@ -62,6 +62,7 @@ function renderSetup() {
       ${subs.length ? `<form data-setup="exam">
         <div class="setrow">${fld('시험 과목', `<select name="subj">${subjOptions(subs)}</select>`, 'grow')}
           ${fld('시험 날짜', `<input type="date" name="date" required>`, 'grow')}
+          <button type="button" class="btn" data-sact="classtime" title="그 요일의 수업 시간을 시험 시간으로 채워요">🏫 수업시간에</button>
           ${fld('시작 시간', `<input type="time" name="s">`)}${fld('끝 시간', `<input type="time" name="e">`)}
           ${fld('장소', `<input name="place" maxlength="30" placeholder="예: 인사관 101호">`, 'grow')}
           ${fld('시험 범위', `<input name="range" maxlength="60" placeholder="예: 1~4장, 7주차까지">`, 'grow')}
@@ -317,6 +318,19 @@ document.addEventListener('click', e => {
   if (b.dataset.sact === 'planexport') {
     const box = document.getElementById('plancode'); box.value = JSON.stringify(p); box.select();
     (navigator.clipboard ? navigator.clipboard.writeText(box.value) : Promise.reject()).then(() => alert('복사했어요!'), () => alert('위 칸의 코드를 직접 복사하세요.'));
+    return;
+  }
+  if (b.dataset.sact === 'classtime') { // 시험 날짜의 요일에 있는 그 과목 수업 시간을 시작·끝 칸에 채움
+    const el = b.closest('form').elements, id = el.subj.value, iso = el.date.value;
+    if (!iso) { alert('시험 날짜를 먼저 골라주세요.'); el.date.focus(); return; }
+    const [y, m, d] = iso.split('-').map(Number), wd = new Date(y, m - 1, d).getDay();
+    const cls = (WD[wd] || []).find(f => f[2] === id);
+    if (!cls) {
+      const days = [1, 2, 3, 4, 5, 6, 0].filter(w => (WD[w] || []).some(f => f[2] === id)).map(w => DOW[w]);
+      alert(days.length ? SUBJ[id].n + ' 수업은 ' + days.join('·') + '요일에 있어요. 고른 날짜는 ' + DOW[wd] + '요일이에요.' : '고정 시간표에 ' + SUBJ[id].n + ' 수업이 없어요. ③에서 먼저 넣거나 시간을 직접 입력해주세요.');
+      return;
+    }
+    el.s.value = cls[0]; el.e.value = cls[1];
     return;
   }
   const [what, a, i] = b.dataset.sdel.split('|');
