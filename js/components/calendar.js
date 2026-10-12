@@ -26,7 +26,7 @@ function renderCal() {
         ${ev.map(e => `<div class="pill solid ${e.k}" style="--c:${e.k === 'exam' ? 'var(--exam)' : SUBJ[e.subj].c}">${e.k === 'exam' ? '📝' : '📌'} ${e.s} ${esc(e.t)}</div>`).join('')}
         ${cls.map(c => c.type === 'alba' ? `<div class="pill cls alba">${c.s}~${c.e} 💼 ${c.t}</div>` : `<div class="pill cls" style="--c:${SUBJ[c.subj].c}">${c.s}~${c.e} 🏫 ${SUBJ[c.subj].n} 수업</div>`).join('')}
         ${tasksOf(k).map(pill).join('')}
-        ${(S.custom[k] || []).map(c => pill({ id: c.id, subj: c.subj, t: c.t })).join('')}
+        ${customOf(k).map(pill).join('')}
       </div>`;
     }).join('')}</div></div>`
   : `<div class="week">${days.map(k => {
@@ -36,7 +36,7 @@ function renderCal() {
         <div class="chips">${ev.map(e => `<span class="chip ${e.k}" style="--c:${SUBJ[e.subj].c}">${e.k === 'exam' ? '📝' : '📌'} ${e.s} ${esc(e.t)}</span>`).join('')}
           ${cls.map(c => `<span class="chip cls" style="--c:${c.type === 'alba' ? OTHER_C : SUBJ[c.subj].c}">${c.s} ${c.type === 'alba' ? '💼 ' + c.t : '🏫 ' + SUBJ[c.subj].n}</span>`).join('')}</div>
         ${ts.map(t => taskRow(t, false)).join('')}
-        ${(S.custom[k] || []).map(c => taskRow({ id: c.id, subj: c.subj, t: c.t, custom: 1 }, false)).join('')}
+        ${customOf(k).map(t => taskRow(t, false)).join('')}
       </div>`;
     }).join('')}</div>`;
   return tabs + body + `<div class="card tip" style="margin-top:10px">🍅 이 주 순공 목표: ${days.map(k => DOW[toDate(k).getDay()] + ' ' + fmtH(tasksOf(k).reduce((x, t) => x + t.h, 0))).join(' + ')} → 총 약 <b>${fmtH(total)}</b><br>칸을 누르면 완료 체크, 날짜를 누르면 시간대별 일정으로 이동해요.</div>`;

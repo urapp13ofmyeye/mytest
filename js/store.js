@@ -10,7 +10,7 @@ function seed(plan) {
   applyPlan(plan);
   return {
     done: {}, hidden: {}, custom: {}, notes: {}, certs: {}, info: {}, tab: 'today',
-    moved: {}, spent: {}, spentDay: {}, pomo: {}, cards: {}, timer: null, plan,
+    moved: {}, spent: {}, spentDay: {}, pomo: {}, cards: {}, timer: null, plan, mt: {},
     lists: SEED_LISTS.map(([k, items, name, color]) => ({
       id: k, name: name || SUBJ[k].full, color: color || SUBJ[k].c,
       items: items.map(t => ({ id: uid(), t, done: false })),
@@ -62,11 +62,19 @@ function baseTasks() {
   return Object.keys(PLAN).flatMap(k => PLAN[k].map((p, i) => ({ id: k + '#' + i, orig: k, s: p[0], e: p[1], subj: p[2], t: p[3], h: hrs(p[0], p[1]), opt: !!p[4] })))
     .filter(t => !S.hidden[t.id]);
 }
+// 직접 추가한 일 (시간은 선택)
+function customOf(k) {
+  return (S.custom[k] || []).map(c => ({ id: c.id, subj: c.subj, t: c.t, s: c.s || '', e: c.e || '', h: c.s && c.e ? hrs(c.s, c.e) : 0, custom: 1, day: k }));
+}
+let editing = null; // 수정 중인 것: 'task:id' | 'item:목록|항목' | 'list:목록'
 const lastMark = () => { for (const d of Object.keys(EVENTS).sort().reverse()) { const e = EVENTS[d].filter(x => x.mark).pop(); if (e) return [d, e.mark]; } return null; };
 const tipCard = lines => lines && lines.length ? `<div class="sect">⚡ ${TIPS.title}</div><div class="card tip">${lines.join('<br>')}</div>` : '';
 function tasksOf(k) {
   return baseTasks().filter(t => (S.moved[t.id] || t.orig) === k)
-    .map(t => Object.assign(t, { day: k }, S.moved[t.id] && S.moved[t.id] !== t.orig ? { s: '', e: '', moved: 1 } : {}))
+    .map(t => { // 이월된 블록은 원래 시간을 지움 (이월 후 새로 정한 시간은 S.mt)
+      const mv = S.moved[t.id] && S.moved[t.id] !== t.orig, mt = (S.mt || {})[t.id];
+      return Object.assign(t, { day: k }, mv ? { s: mt ? mt.s : '', e: mt ? mt.e : '', moved: 1 } : {}, mv && mt ? { h: hrs(mt.s, mt.e) } : {});
+    })
     .sort((a, b) => (a.s || '99') < (b.s || '99') ? -1 : (a.s || '99') > (b.s || '99') ? 1 : 0);
 }
 const nextDay = k => DATES[DATES.indexOf(k) + 1];

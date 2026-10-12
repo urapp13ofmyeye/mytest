@@ -10,6 +10,7 @@ function render() {
   document.getElementById('view').innerHTML = VIEWS[S.tab]();
   const ngw = document.querySelector('.gridwrap');
   if (ngw) { const t = ngw.querySelector('.today'); ngw.scrollLeft = keep != null ? keep : t ? t.offsetLeft - ngw.offsetLeft - 16 : 0; }
+  const ef = document.querySelector('[data-editfocus]'); if (ef) { ef.focus(); ef.setSelectionRange(ef.value.length, ef.value.length); }
   document.querySelectorAll('#nav button').forEach(b => b.classList.toggle('on', b.dataset.tab === (S.tab === 'setup' ? 'more' : S.tab)));
   const n = new Date(), p = progress();
   document.getElementById('now').textContent = `${n.getMonth() + 1}/${n.getDate()}(${DOW[n.getDay()]}) ${lastMark() ? ` · ${lastMark()[1]}까지 ${dday(lastMark()[0])}` : ''}`;
@@ -21,12 +22,18 @@ const findItem = v => { const [l, i] = v.split('|'), list = S.lists.find(x => x.
 document.addEventListener('click', e => {
   const t = e.target.closest('button, [data-day], [data-subj]'); if (!t) return;
   const d = t.dataset;
-  if (d.tab) { S.tab = d.tab; window.scrollTo(0, 0); }
+  if (d.tab) { S.tab = d.tab; editing = null; window.scrollTo(0, 0); }
   else if (d.day) { viewDay = d.day; if (d.go) { S.tab = d.go; window.scrollTo(0, 0); } }
   else if (d.week) viewWeek = d.week;
   else if (d.mode) S.calMode = d.mode;
   else if (d.subj) { viewSubj = d.subj; study = null; window.scrollTo(0, 0); }
-  else if (d.move) { const [id, day] = d.move.split('|'); S.moved[id] = day; }
+  else if (d.move) { const [id, day] = d.move.split('|'); S.moved[id] = day; if (S.mt) delete S.mt[id]; }
+  else if (d.movec) { // 직접 추가한 일을 다른 날로
+    const [id, day] = d.movec.split('|');
+    for (const k in S.custom) { const c = S.custom[k].find(x => x.id === id); if (c) { S.custom[k] = S.custom[k].filter(x => x !== c); delete c.s; delete c.e; (S.custom[day] = S.custom[day] || []).push(c); break; } }
+  }
+  else if (d.edit) editing = d.edit;
+  else if (d.canceledit) editing = null;
   else if (d.moveall) overdue().forEach(t => { S.moved[t.id] = todayKey(); });
   else if (d.dropopt) overdue().filter(t => t.opt).forEach(t => { S.hidden[t.id] = 1; });
   else if (d.timer) {
@@ -88,6 +95,22 @@ document.addEventListener('submit', e => {
   const f = e.target, d = f.dataset, v = n => f.elements[n].value.trim();
   if (d.addtask) (S.custom[d.addtask] = S.custom[d.addtask] || []).push({ id: 'c' + uid(), subj: v('subj'), t: v('t') });
   else if (d.additem) S.lists.find(l => l.id === d.additem).items.push({ id: uid(), t: v('t'), done: false });
+  else if (d.edittask) {
+    const id = d.edittask, st = v('s'), en = v('e'), ok = st && en && st < en; // 시간은 둘 다 있고 순서가 맞을 때만 반영
+    let c; for (const k in S.custom) c = c || S.custom[k].find(x => x.id === id);
+    if (c) { c.t = v('t'); c.subj = v('subj'); if (ok) { c.s = st; c.e = en; } else { delete c.s; delete c.e; } }
+    else { // 계획 블록은 내 일정(S.plan)의 원본을 직접 고침: [시작, 끝, 과목, 할 일, 여유]
+      const [day, idx] = id.split('#'), p = PLAN[day] && PLAN[day][+idx];
+      if (p) {
+        p[2] = v('subj'); p[3] = v('t'); p[4] = f.elements.opt.checked ? 1 : 0;
+        if (S.moved[id] && S.moved[id] !== day) { S.mt = S.mt || {}; if (ok) S.mt[id] = { s: st, e: en }; else delete S.mt[id]; }
+        else if (ok) { p[0] = st; p[1] = en; }
+      }
+    }
+    editing = null;
+  }
+  else if (d.edititem) { const { list, i } = findItem(d.edititem); list.items.find(x => x.id === i).t = v('t'); editing = null; }
+  else if (d.editlist) { S.lists.find(l => l.id === d.editlist).name = v('t'); editing = null; }
   else if ('addlist' in d) S.lists.push({ id: uid(), name: v('name'), color: v('color'), items: [] });
   else if (d.addcard) (S.cards[d.addcard] = S.cards[d.addcard] || []).push({ id: uid(), q: v('q'), a: v('a') });
   else if (d.bulkcard) {

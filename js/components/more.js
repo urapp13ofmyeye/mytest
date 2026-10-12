@@ -13,18 +13,18 @@ function renderMore() {
         <span class="badge h">${S.certs[id] ? ddayFull(S.certs[id]) : '시험일 입력'}</span></div>`).join('')}
       <div class="tip" style="margin-top:8px">${CERTS.note}</div>
     </div>` : ''}
-    <div class="sect">계정</div>
-    <div class="card">
-      <div class="acct"><b>${user ? esc(user.email) : ''}</b><span id="syncmore">${SYNC_TEXT[syncState]}</span></div>
-      <div class="tip">내용은 계정에 자동으로 저장돼요. 다른 기기에서도 같은 이메일로 로그인하면 이어서 볼 수 있어요.</div>
-      <div class="addrow"><button class="btn" data-act="logout">로그아웃</button></div>
-    </div>
     <div class="sect">파일 백업</div>
     <div class="card">
       <div class="tip">혹시 모를 때를 위해 파일로 따로 보관할 수 있어요. 불러오면 지금 내용을 덮어써요.<br>마지막 변경: ${fmtTime(S.savedAt)}</div>
       <div class="addrow"><button class="btn" data-act="filesave">파일로 저장</button><button class="btn" data-act="fileload">파일에서 불러오기</button>
         <input type="file" id="bkfile" accept=".json,application/json" class="sr" aria-label="백업 파일 선택"></div>
       <div class="addrow"><button class="btn danger" data-act="reset">체크·메모 초기화</button></div>
+    </div>
+    <div class="sect">계정</div>
+    <div class="card">
+      <div class="acct"><b>${user ? esc(user.email) : ''}</b><span id="syncmore">${SYNC_TEXT[syncState]}</span></div>
+      <div class="tip">내용은 계정에 자동으로 저장돼요. 다른 기기에서도 같은 이메일로 로그인하면 이어서 볼 수 있어요.</div>
+      <div class="addrow"><button class="btn" data-act="logout">로그아웃</button></div>
     </div>`;
 }
 function timetable() {

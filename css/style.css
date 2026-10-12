@@ -353,3 +353,12 @@ form[data-bulkcard] textarea { min-height: 110px; }
 @media (pointer: coarse) { input, select, textarea { font-size: 16px !important; } }
 /* 범위·유형 입력칸: 긴 내용도 잘리지 않고 여러 줄로 */
 textarea.infoin { display: block; resize: none; line-height: 1.45; field-sizing: content; min-height: 2.9em; overflow-wrap: anywhere; }
+
+/* 수정 폼 */
+.editrow { display: flex; flex-direction: column; gap: 6px; padding: 8px 10px; margin: 6px 0; border: 1.5px solid var(--c); border-radius: 10px; background: color-mix(in srgb, var(--c) 8%, var(--card)); }
+.editrow input, .editrow select { border: 1.5px solid var(--line); background: var(--card); border-radius: 8px; padding: 7px 9px; font-size: 13px; min-width: 0; }
+.editrow input[name="t"] { width: 100%; }
+.editline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.editline input[type="time"] { flex: 1 1 90px; }
+.optck { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; }
+.row .x, .item .x, .list h3 .x { padding: 0 3px; }

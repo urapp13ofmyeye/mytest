@@ -1,12 +1,26 @@
 /* 오늘 탭: 하루 시간대별 일정 */
 /* ══════════ 렌더: 하루 ══════════ */
+function taskEditForm(id) {
+  const t = allTasks().find(x => x.id === id) || DATES.flatMap(customOf).find(x => x.id === id); if (!t) return '';
+  return `<form class="editrow" data-edittask="${t.id}" style="--c:${(SUBJ[t.subj] || SUBJ.etc).c}">
+    <input name="t" value="${esc(t.t)}" aria-label="할 일" data-editfocus required>
+    <div class="editline">
+      <select name="subj" aria-label="과목">${Object.entries(SUBJ).map(([k, s]) => `<option value="${k}"${k === t.subj ? ' selected' : ''}>${esc(s.n)}</option>`).join('')}</select>
+      <input type="time" name="s" value="${t.s}" aria-label="시작 시간"><span>~</span><input type="time" name="e" value="${t.e}" aria-label="끝 시간">
+      ${t.custom ? '' : `<label class="optck"><input type="checkbox" name="opt"${t.opt ? ' checked' : ''}>여유</label>`}
+    </div>
+    <div class="editline"><button class="btn pri">저장</button><button type="button" class="btn" data-canceledit="1">취소</button></div>
+  </form>`;
+}
 function taskRow(t, showTime) {
+  if (editing === 'task:' + t.id) return taskEditForm(t.id);
   const sj = SUBJ[t.subj] || SUBJ.etc, d = !!S.done[t.id];
   return `<div class="row task${d ? ' done' : ''}${t.opt ? ' opt' : ''}" style="--c:${sj.c}">
-    ${showTime ? `<div class="tm">${t.moved ? '이월' : (t.s || '') + '<br>' + (t.e || '')}</div>` : ''}
+    ${showTime ? `<div class="tm">${t.moved && !t.s ? '이월' : (t.s || '') + '<br>' + (t.e || '')}</div>` : ''}
     <label class="body"><input type="checkbox" data-done="${t.id}"${d ? ' checked' : ''}>
       <span class="txt"><em>${sj.n}</em>${t.opt ? '<u>여유</u>' : ''}${esc(t.t)}${t.h ? `<small>${showTime || !t.s ? '' : t.s + ' · '}${fmtH(t.h)}${t.moved ? ' · ' + label(t.orig) + '에서 이월' : ''}</small>` : ''}</span></label>
-    ${showTime && t.day && nextDay(t.day) && !d ? `<button class="x" data-move="${t.id}|${nextDay(t.day)}" title="다음 날로 미루기" aria-label="다음 날로 미루기">↪</button>` : ''}
+    ${showTime && t.day && nextDay(t.day) && !d ? `<button class="x" data-move${t.custom ? 'c' : ''}="${t.id}|${nextDay(t.day)}" title="다음 날로 미루기" aria-label="다음 날로 미루기">↪</button>` : ''}
+    <button class="x" data-edit="task:${t.id}" title="수정" aria-label="수정">✎</button>
     <button class="x" data-${t.custom ? 'delc' : 'hide'}="${t.id}" aria-label="삭제">×</button></div>`;
 }
 function fixedOf(k) {
@@ -21,10 +35,9 @@ function timeline(k) {
     ...cls.map(c => ({ s: c.s, html: `<div class="row" style="--c:${c.type === 'alba' ? OTHER_C : SUBJ[c.subj].c}"><div class="tm">${c.s}<br>${c.e}</div><div class="body">${c.type === 'alba' ? '💼 ' + c.t : '🏫 ' + c.t + ' 수업'}</div></div>` })),
     ...MEAL[toDate(k).getDay()].map(m => ({ s: m[0], html: `<div class="row meal"><div class="tm">${m[0]}<br>${m[1]}</div><div class="body">${m[2]}</div></div>` })),
     ...ev.map(e => ({ s: e.s || '00:00', html: `<div class="row ${e.k}" style="--c:${SUBJ[e.subj].c}"><div class="tm">${e.s}<br>${e.e}</div><div class="body">${e.k === 'exam' ? '📝 ' : '📌 '}${esc(e.t)}${e.place ? ' · ' + esc(e.place) : ''}${e.est ? '<small>수업시간 기준</small>' : ''}${e.desc ? `<div style="font-weight:400;font-size:12px">${esc(e.desc)}</div>` : ''}</div></div>` })),
-    ...tasksOf(k).map(t => ({ s: t.s || '99:99', html: taskRow(t, true) })),
+    ...[...tasksOf(k), ...customOf(k)].map(t => ({ s: t.s || '99:99', html: taskRow(t, true) })),
   ].sort((a, b) => a.s < b.s ? -1 : a.s > b.s ? 1 : 0);
-  const custom = (S.custom[k] || []).map(c => taskRow({ id: c.id, subj: c.subj, t: c.t, custom: 1 }, true)).join('');
-  return rows.map(r => r.html).join('') + custom;
+  return rows.map(r => r.html).join('');
 }
 function dayBadges(k) {
   const tk = todayKey(), ev = EVENTS[k] || [];

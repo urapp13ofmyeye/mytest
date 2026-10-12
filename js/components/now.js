@@ -46,7 +46,7 @@ function beep() {
   try { navigator.vibrate && navigator.vibrate([300, 150, 300]); } catch (e) {}
 }
 setInterval(() => {
-  if (!S.timer) return;
+  if (!S || !S.timer) return;
   const left = timerLeft(), el = document.getElementById('clock');
   if (el) el.textContent = clockStr(left);
   document.title = clockStr(left) + (S.timer.mode === 'focus' ? ' 🍅 집중' : ' ☕ 휴식');
