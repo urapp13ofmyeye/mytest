@@ -47,8 +47,11 @@ function renderSetup() {
         <button class="x" data-sdel="wd|${d}|${i}" aria-label="삭제">×</button></div>`).join('')).join('') || '<div class="tip">아직 없어요. 수업이 없으면 건너뛰어도 돼요.</div>'}
       <form data-setup="wd">
         <div class="setrow">${fld('요일', `<select name="day">${ORDER.map(d => `<option value="${d}">${DOW[d]}요일</option>`).join('')}</select>`)}
-          ${fld('시작', `<input type="time" name="s" required>`)}${fld('끝', `<input type="time" name="e" required>`)}
           ${fld('종류', `<select name="who">${subjOptions(subs)}<option value="work">기타 일정 (알바 등)</option></select>`)}
+          <label class="grow" data-period${subs.length ? '' : ' hidden'}>교시로 고르기 (강의만)<span class="perpair">
+            <select name="p1" aria-label="시작 교시"><option value="">직접 입력</option>${P_START.map((t, i) => `<option value="${i}">${i + 1}교시 (${t}~${P_END[i]})</option>`).join('')}</select><span>~</span>
+            <select name="p2" aria-label="끝 교시"><option value="">같은 교시</option>${P_START.map((t, i) => `<option value="${i}">${i + 1}교시까지</option>`).join('')}</select></span></label>
+          ${fld('시작', `<input name="s" inputmode="numeric" maxlength="5" placeholder="0900" autocomplete="off" data-time required>`)}${fld('끝', `<input name="e" inputmode="numeric" maxlength="5" placeholder="1015" autocomplete="off" data-time required>`)}
           ${fld('이름 (기타 일정일 때)', `<input name="name" maxlength="20" placeholder="예: 알바">`, 'grow')}</div>
         <div class="addrow"><button class="btn pri">＋ 시간표 추가</button></div>
       </form>
@@ -241,6 +244,32 @@ function dayKey(iso) {
   if (+iso.slice(0, 4) !== YEAR) { alert('날짜는 학기 시작일과 같은 해(' + YEAR + '년)만 넣을 수 있어요.'); return null; }
   return iso.slice(5);
 }
+// 숫자로 친 시간을 'HH:MM'으로: 9 → 09:00, 930 → 09:30, 1330 → 13:30, 9:5 → 09:05. 잘못된 값이면 ''
+function normTime(str) {
+  const t = String(str).replace(/[^\d:]/g, ''); if (!t) return '';
+  let h, m;
+  if (t.includes(':')) [h, m] = t.split(':').map(x => +x || 0);
+  else if (t.length <= 2) { h = +t; m = 0; }
+  else { h = +t.slice(0, -2); m = +t.slice(-2); }
+  return h < 24 && m < 60 ? pad(h) + ':' + pad(m) : '';
+}
+// 고정 시간표 입력칸: 교시를 고르면 시간이 채워지고(강의만), 숫자로 친 시간은 칸을 벗어날 때 HH:MM으로 정리
+document.addEventListener('change', e => {
+  const f = e.target.closest && e.target.closest('form[data-setup="wd"]'); if (!f) return;
+  const el = f.elements, n = e.target.name;
+  if (n === 'who') {
+    const lecture = el.who.value !== 'work';
+    f.querySelector('[data-period]').hidden = !lecture;
+    if (!lecture) el.p1.value = el.p2.value = '';
+  } else if (n === 'p1' || n === 'p2') {
+    if (el.p1.value === '') { el.p2.value = ''; return; }
+    const a = +el.p1.value, b = el.p2.value === '' ? a : Math.max(a, +el.p2.value);
+    el.s.value = P_START[a]; el.e.value = P_END[b];
+  } else if (n === 's' || n === 'e') {
+    const t = normTime(e.target.value); if (t) e.target.value = t;
+    el.p1.value = el.p2.value = ''; // 직접 고쳤으면 교시 선택은 풀어둠
+  }
+});
 const orderOk = (s, e) => mins(s) < mins(e) || (alert('끝나는 시간이 시작 시간보다 늦어야 해요.'), false);
 function eachDay(fromKey, untilKey) {
   const out = [], d = toDate(fromKey), end = toDate(untilKey);
@@ -265,8 +294,10 @@ document.addEventListener('submit', e => {
   } else if (kind === 'wd') {
     const who = v('who'), name = v('name') || (who === 'work' ? '' : SUBJ[who].full);
     if (!name) { alert('기타 일정은 표시 이름을 적어주세요. (예: 알바)'); return; }
-    if (!orderOk(v('s'), v('e'))) return;
-    p.WD[+v('day')].push([v('s'), v('e'), who, name]);
+    const st = normTime(v('s')), en = normTime(v('e'));
+    if (!st || !en) { alert('시간은 0900, 930, 13:30처럼 입력해주세요.'); return; }
+    if (!orderOk(st, en)) return;
+    p.WD[+v('day')].push([st, en, who, name]);
     p.WD[+v('day')].sort((a, b) => a[0] < b[0] ? -1 : 1);
   } else if (kind === 'exam') {
     const key = dayKey(v('date')); if (!key) return;

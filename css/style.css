@@ -362,3 +362,8 @@ textarea.infoin { display: block; resize: none; line-height: 1.45; field-sizing:
 .editline input[type="time"] { flex: 1 1 90px; }
 .optck { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; }
 .row .x, .item .x, .list h3 .x { padding: 0 3px; }
+
+/* 고정 시간표: 교시 선택 */
+.setrow label[hidden] { display: none; }
+.perpair { display: flex; align-items: center; gap: 6px; }
+.perpair select { flex: 1 1 0; min-width: 0; }
