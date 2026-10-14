@@ -367,3 +367,25 @@ textarea.infoin { display: block; resize: none; line-height: 1.45; field-sizing:
 .setrow label[hidden] { display: none; }
 .perpair { display: flex; align-items: center; gap: 6px; }
 .perpair select { flex: 1 1 0; min-width: 0; }
+
+/* 과목 상세: 시험일·목표 입력 */
+.exrow { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.exrow .infoin { flex: 1 1 0; min-width: 0; }
+.exrow span { font-size: 12px; color: var(--mute); }
+.metacards .card > .infoin + .infoin, .metacards .card > .exrow + .infoin { margin-top: 4px; }
+.metasub { display: block; margin-top: 4px; font-size: 11px; color: var(--mute); }
+input.infoin[type="date"], input.infoin[type="time"] { font-weight: 700; min-height: 1.9em; }
+/* 체크리스트 순서 바꾸기 */
+.grip { flex: 0 0 auto; cursor: grab; touch-action: none; user-select: none; color: var(--mute); font-size: 16px; line-height: 1; padding: 2px 4px 0 0; }
+.item.dragging { opacity: .6; background: var(--soft); border-radius: 8px; }
+.item.dragging .grip { cursor: grabbing; }
+/* 암기 카드 ⭐ */
+.star { flex: 0 0 auto; border: 0; background: none; font-size: 17px; line-height: 1; color: var(--mute); padding: 1px 2px 0; cursor: pointer; }
+.star.on { color: #E0A040; }
+.starck { flex: 0 0 auto; display: flex; align-items: center; cursor: pointer; font-size: 20px; color: var(--mute); padding: 0 2px; }
+.starck input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.starck input:checked + span { color: #E0A040; }
+.starck input:checked + span::before { content: '★'; }
+.starck input:checked + span { font-size: 0; }
+.starck input:checked + span::before { font-size: 20px; }
+.starck input:focus-visible + span { outline: 2px solid var(--today); border-radius: 4px; }

@@ -49,11 +49,12 @@ document.addEventListener('click', e => {
   }
   else if (d.card) {
     const [act, arg] = d.card.split('|'), cs = S.cards[viewSubj] || [];
-    if (act === 'start') { const ids = cs.filter(c => arg === 'all' || c.ok === false).map(c => c.id).sort(() => Math.random() - 0.5); study = { subj: viewSubj, ids, i: 0, show: false }; }
+    if (act === 'start') { const ids = cs.filter(c => arg === 'all' || (arg === 'star' ? c.star : c.ok === false)).map(c => c.id).sort(() => Math.random() - 0.5); study = { subj: viewSubj, ids, i: 0, show: false }; }
     else if (act === 'flip') study.show = !study.show;
     else if (act === 'exit') study = null;
     else { const c = cs.find(x => x.id === study.ids[study.i]); if (c) c.ok = act === 'ok'; study.i++; study.show = false; }
   }
+  else if (d.star) { const [id, cid] = d.star.split('|'), c = (S.cards[id] || []).find(x => x.id === cid); if (c) c.star = !c.star; }
   else if (d.delcard) { const [id, cid] = d.delcard.split('|'); S.cards[id] = (S.cards[id] || []).filter(c => c.id !== cid); }
   else if (d.hide) { if (!confirm('이 계획을 삭제할까요?')) return; S.hidden[d.hide] = 1; }
   else if (d.delc) { for (const k in S.custom) S.custom[k] = S.custom[k].filter(c => c.id !== d.delc); delete S.done[d.delc]; }
@@ -83,6 +84,8 @@ document.addEventListener('change', e => {
   if (d.done) { if (e.target.checked) S.done[d.done] = 1; else delete S.done[d.done]; }
   else if (d.item) { const { list, i } = findItem(d.item); list.items.find(x => x.id === i).done = e.target.checked; }
   else if (d.cert) S.certs[d.cert] = e.target.value;
+  else if (d.exam) { const [id, k] = d.exam.split('|'), val = e.target.value.trim(); if (k === 'date' && !val) { render(); return; } setExam(id, { [k]: val }); }
+  else if (d.goal) { const g = Math.max(0, parseFloat(e.target.value) || 0); (S.info[d.goal] = S.info[d.goal] || {}).goal = g || undefined; }
   else if (d.info) { const [id, k] = d.info.split('|'); (S.info[id] = S.info[id] || {})[k] = e.target.value.trim(); }
   else return;
   save(); render();
@@ -112,13 +115,14 @@ document.addEventListener('submit', e => {
   else if (d.edititem) { const { list, i } = findItem(d.edititem); list.items.find(x => x.id === i).t = v('t'); editing = null; }
   else if (d.editlist) { S.lists.find(l => l.id === d.editlist).name = v('t'); editing = null; }
   else if ('addlist' in d) S.lists.push({ id: uid(), name: v('name'), color: v('color'), items: [] });
-  else if (d.addcard) (S.cards[d.addcard] = S.cards[d.addcard] || []).push({ id: uid(), q: v('q'), a: v('a') });
+  else if (d.addcard) (S.cards[d.addcard] = S.cards[d.addcard] || []).push({ id: uid(), q: v('q'), a: v('a'), star: f.elements.star.checked });
   else if (d.bulkcard) {
-    // 한 줄에 한 장: 탭, |, " - ", ": " 중 처음 나오는 구분자로 앞면/뒷면을 나눔
-    const list = S.cards[d.bulkcard] = S.cards[d.bulkcard] || [];
-    const bad = v('bulk').split('\n').map(l => l.trim()).filter(Boolean).filter(l => {
+    // 한 줄에 한 장: 탭, |, " - ", ": " 중 처음 나오는 구분자로 앞면/뒷면을 나눔. 맨 앞 ★ ⭐ * 는 중요 표시
+    const list = S.cards[d.bulkcard] = S.cards[d.bulkcard] || [], all = f.elements.allstar.checked;
+    const bad = v('bulk').split('\n').map(l => l.trim()).filter(Boolean).filter(raw => {
+      const star = all || /^[★⭐*]/.test(raw), l = raw.replace(/^[★⭐*]+\s*/, '');
       const m = l.match(/^(.+?)(?:\t+|\s*\|\s*|\s+[-–—=]\s+|\s*:\s+)(.+)$/);
-      if (m) list.push({ id: uid(), q: m[1].trim(), a: m[2].trim() });
+      if (m) list.push({ id: uid(), q: m[1].trim(), a: m[2].trim(), star });
       return !m;
     });
     if (bad.length) alert('구분자(" - ")를 못 찾아서 건너뛴 줄 ' + bad.length + '개:\n' + bad.slice(0, 5).join('\n'));
