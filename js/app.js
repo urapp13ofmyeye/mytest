@@ -1,13 +1,15 @@
 /* 탭 전환 · 화면 그리기 · 클릭/입력 처리 */
 /* ══════════ 렌더 루프 · 이벤트 ══════════ */
-const VIEWS = { today: renderToday, cal: renderCal, subj: renderSubj, check: renderCheck, more: renderMore, setup: renderSetup };
+const VIEWS = { today: renderToday, cal: renderCal, subj: renderSubj, check: renderCheck, more: renderMore, setup: renderSetup, sqld: renderSqld };
 function render() {
   if (!S) return;
-  if (!VIEWS[S.tab]) S.tab = 'today';
+  if (!VIEWS[S.tab] || (S.tab === 'sqld' && !SQ().on)) S.tab = 'today';
+  document.getElementById('navsqld').hidden = !SQ().on; // SQLD 탭은 켠 계정에만 보임
   document.title = CONFIG.title;
   document.getElementById('title').textContent = CONFIG.icon + ' ' + CONFIG.title;
-  const gw = document.querySelector('.gridwrap'), keep = gw ? gw.scrollLeft : null;
+  const gw = document.querySelector('.gridwrap'), keep = gw ? gw.scrollLeft : null, sqp = sqBefore();
   document.getElementById('view').innerHTML = VIEWS[S.tab]();
+  sqAfter(sqp);
   const ngw = document.querySelector('.gridwrap');
   if (ngw) { const t = ngw.querySelector('.today'); ngw.scrollLeft = keep != null ? keep : t ? t.offsetLeft - ngw.offsetLeft - 16 : 0; }
   const ef = document.querySelector('[data-editfocus]'); if (ef) { ef.focus(); ef.setSelectionRange(ef.value.length, ef.value.length); }
@@ -20,9 +22,10 @@ function render() {
 const findItem = v => { const [l, i] = v.split('|'), list = S.lists.find(x => x.id === l); return { list, i }; };
 
 document.addEventListener('click', e => {
+  if (e.target.closest('#title')) { sqTitleTap(); return; }
   const t = e.target.closest('button, [data-day], [data-subj]'); if (!t) return;
   const d = t.dataset;
-  if (d.tab) { S.tab = d.tab; editing = null; window.scrollTo(0, 0); }
+  if (d.tab) { S.tab = d.tab; editing = null; sqOpen = null; window.scrollTo(0, 0); }
   else if (d.day) { viewDay = d.day; if (d.go) { S.tab = d.go; window.scrollTo(0, 0); } }
   else if (d.week) viewWeek = d.week;
   else if (d.mode) S.calMode = d.mode;
@@ -68,8 +71,8 @@ document.addEventListener('click', e => {
   }
   else if (d.act === 'fileload') { document.getElementById('bkfile').click(); return; }
   else if (d.act === 'logout') { if (confirm('로그아웃할까요? 내용은 계정에 저장돼 있어요.')) logout(); return; }
-  else if (d.act === 'reset') { if (!confirm('체크·메모·체크리스트를 모두 처음 상태로 되돌릴까요?')) return; S = seed(); S.tab = 'more'; }
-  else return;
+  else if (d.act === 'reset') { if (!confirm('체크·메모·체크리스트를 모두 처음 상태로 되돌릴까요?')) return; const sq = S.sqld; S = seed(); S.sqld = sq || S.sqld; S.tab = 'more'; } // SQLD 기록은 유지
+  else { const r = sqClick(d); if (!r || r === 'skip') return; }
   save(); render();
 });
 document.addEventListener('change', e => {
@@ -87,7 +90,7 @@ document.addEventListener('change', e => {
   else if (d.exam) { const [id, k] = d.exam.split('|'), val = e.target.value.trim(); if (k === 'date' && !val) { render(); return; } setExam(id, { [k]: val }); }
   else if (d.goal) { const g = Math.max(0, parseFloat(e.target.value) || 0); (S.info[d.goal] = S.info[d.goal] || {}).goal = g || undefined; }
   else if (d.info) { const [id, k] = d.info.split('|'); (S.info[id] = S.info[id] || {})[k] = e.target.value.trim(); }
-  else return;
+  else if (!sqChange(d, e.target)) return;
   save(); render();
 });
 document.addEventListener('input', e => {
@@ -127,6 +130,7 @@ document.addEventListener('submit', e => {
     });
     if (bad.length) alert('구분자(" - ")를 못 찾아서 건너뛴 줄 ' + bad.length + '개:\n' + bad.slice(0, 5).join('\n'));
   }
+  else if (!sqSubmit(f, d)) return;
   save(); render();
 });
 function startApp() { render(); }

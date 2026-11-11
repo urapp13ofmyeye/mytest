@@ -36,6 +36,7 @@
   <button data-tab="cal"><span>📅</span>달력</button>
   <button data-tab="subj"><span>📖</span>과목</button>
   <button data-tab="check"><span>✅</span>체크리스트</button>
+  <button data-tab="sqld" id="navsqld" hidden><span>🍇</span>SQLD</button>
   <button data-tab="more"><span>⚙️</span>기타</button>
 </nav>
 </div>
@@ -43,6 +44,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <!-- 일정 틀 (일정 자체는 각자의 계정에 저장됨) -->
 <script src="data/defaults.js"></script>
+<!-- SQLD 점검 탭의 목차 (내용은 각자의 계정에 저장됨) -->
+<script src="data/sqld.js"></script>
 <!-- 공용 코드 -->
 <script src="js/store.js"></script>
 <script src="js/components/now.js"></script>
@@ -51,6 +54,7 @@
 <script src="js/components/subjects.js"></script>
 <script src="js/components/checklist.js"></script>
 <script src="js/components/more.js"></script>
+<script src="js/components/sqld.js"></script>
 <script src="js/components/setup.js"></script>
 <script src="js/cloud.js"></script>
 <script src="js/app.js"></script>

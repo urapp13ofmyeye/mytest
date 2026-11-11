@@ -10,7 +10,7 @@ function seed(plan) {
   applyPlan(plan);
   return {
     done: {}, hidden: {}, custom: {}, notes: {}, certs: {}, info: {}, tab: 'today',
-    moved: {}, spent: {}, spentDay: {}, pomo: {}, cards: {}, timer: null, plan, mt: {},
+    moved: {}, spent: {}, spentDay: {}, pomo: {}, cards: {}, timer: null, plan, mt: {}, sqld: sqldSeed(),
     lists: SEED_LISTS.map(([k, items, name, color]) => ({
       id: k, name: name || SUBJ[k].full, color: color || SUBJ[k].c,
       items: items.map(t => ({ id: uid(), t, done: false })),
@@ -33,6 +33,13 @@ function importData(text, src) {
   return true;
 }
 /* ══════════ 유틸 ══════════ */
+// 화면 아래에 잠깐 뜨는 알림
+function toast(msg) {
+  let el = document.getElementById('toast');
+  if (!el) { el = document.createElement('div'); el.id = 'toast'; el.className = 'toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200);
+}
 const pad = n => String(n).padStart(2, '0');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const toDate = k => new Date(YEAR, +k.slice(0, 2) - 1, +k.slice(3));
