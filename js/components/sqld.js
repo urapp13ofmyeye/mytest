@@ -79,6 +79,7 @@ function sqPanel() {
   return `<button class="sqback" data-sqclose="1" tabindex="-1" aria-label="패널 닫기"></button>
   <aside class="sqpanel${sqEnter ? ' enter' : ''}" role="dialog" aria-modal="true" aria-labelledby="sqptitle">
     <div class="sqphead"><i class="grape mini ${sqLv(t.id)}" aria-hidden="true"></i><div><small>${u.id} ${esc(u.name)} · ${t.n}번</small><h2 id="sqptitle">${esc(t.name)}</h2></div>
+      <div class="sqnav">${sqNavBtn(t.id, -1)}${sqNavBtn(t.id, 1)}</div>
       <button class="x sqclose" data-sqclose="1" aria-label="패널 닫기">✕</button></div>
     <div class="sqbody">
       ${SQLD_SECTS.map(s => sqSection(t.id, s)).join('')}
@@ -89,6 +90,13 @@ function sqPanel() {
       <button class="btn" data-sqread="${t.id}|-1"${r ? '' : ' disabled'} aria-label="회독 1 빼기" title="잘못 눌렀을 때">−1</button>
       <button class="btn pri" data-sqread="${t.id}|1">회독 완료 +1</button></div>
   </aside>`;
+}
+// 이전/다음 소단원 (단원 경계를 넘어 1-1.1 → 2-3.4 순서). 끝이면 비활성
+const sqStep = (tid, dir) => { const ids = Object.keys(SQLD_TOPICS); return ids[ids.indexOf(tid) + dir] || null; };
+function sqNavBtn(tid, dir) {
+  const to = sqStep(tid, dir), lbl = dir < 0 ? '이전' : '다음';
+  return to ? `<button class="btn" data-sqopen="${to}" title="${lbl}: ${esc(sqName(to))} (${dir < 0 ? '←' : '→'})" aria-label="${lbl} 소단원: ${esc(sqName(to))}">${dir < 0 ? '‹' : '›'}</button>`
+    : `<button class="btn" disabled aria-label="${lbl} 소단원 없음">${dir < 0 ? '‹' : '›'}</button>`;
 }
 function sqSection(tid, [k, title, ck, empty]) {
   const list = sqList(tid, k), dn = list.filter(x => x.done).length;
@@ -209,9 +217,13 @@ function sqTitleTap() {
   toast(SQ().on ? '🍇 SQLD 탭이 켜졌어요' : 'SQLD 탭을 숨겼어요 · 제목을 5번 누르면 다시 보여요');
 }
 document.addEventListener('keydown', e => {
-  if (e.key !== 'Escape' || !S || S.tab !== 'sqld' || !sqOpen) return;
-  if (editing) editing = null; else sqOpen = null;
-  render();
+  if (!S || S.tab !== 'sqld' || !sqOpen) return;
+  if (e.key === 'Escape') { if (editing) editing = null; else sqOpen = null; render(); return; }
+  // ← → 로 이전/다음 소단원 (입력 중일 땐 무시)
+  if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !(e.target.closest && e.target.closest('input, textarea, select')) && !e.altKey && !e.ctrlKey && !e.metaKey) {
+    const to = sqStep(sqOpen, e.key === 'ArrowLeft' ? -1 : 1);
+    if (to) { sqOpen = to; editing = null; render(); }
+  }
 });
 // 다시 그릴 때 패널 스크롤 유지 · 뒤 화면 스크롤 잠금 · 열릴 때 닫기 버튼에 포커스 (app.js render에서 호출)
 function sqBefore() { const b = document.querySelector('.sqbody'); return b ? [sqShown, b.scrollTop] : null; }

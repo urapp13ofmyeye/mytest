@@ -475,6 +475,8 @@ body.sqlock { overflow: hidden; }
 .sqphead small { font-size: 11.5px; color: var(--mute); }
 .sqphead h2 { font-size: 17px; font-weight: 700; line-height: 1.35; }
 .sqclose { font-size: 17px; padding: 2px 8px; }
+.sqphead > .sqnav { flex: 0 0 auto; display: flex; gap: 4px; align-self: center; }
+.sqnav .btn { width: 34px; height: 32px; padding: 0; font-size: 18px; line-height: 1; }
 .sqbody { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 16px 18px; }
 .sqbody .sect small { color: var(--mute); margin-left: 6px; font-size: 12px; font-weight: 500; }
 .sqsect { background: var(--card); border: 1.5px solid var(--line); border-radius: 12px; padding: 2px 12px 10px; }
