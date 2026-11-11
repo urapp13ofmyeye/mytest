@@ -79,24 +79,23 @@ function sqPanel() {
   return `<button class="sqback" data-sqclose="1" tabindex="-1" aria-label="패널 닫기"></button>
   <aside class="sqpanel${sqEnter ? ' enter' : ''}" role="dialog" aria-modal="true" aria-labelledby="sqptitle">
     <div class="sqphead"><i class="grape mini ${sqLv(t.id)}" aria-hidden="true"></i><div><small>${u.id} ${esc(u.name)} · ${t.n}번</small><h2 id="sqptitle">${esc(t.name)}</h2></div>
-      <div class="sqnav">${sqNavBtn(t.id, -1)}${sqNavBtn(t.id, 1)}</div>
       <button class="x sqclose" data-sqclose="1" aria-label="패널 닫기">✕</button></div>
     <div class="sqbody">
       ${SQLD_SECTS.map(s => sqSection(t.id, s)).join('')}
       ${sqWrongSection(t.id)}
       <div class="sqhide"><button class="linkbtn" data-sqcopy="${t.id}">📋 이 소단원 md로 복사</button></div>
     </div>
-    <div class="sqfoot"><span>회독 <b>${r}</b>회</span>
+    <div class="sqfoot">${sqNavBtn(t.id, -1)}<span>회독 <b>${r}</b>회</span>
       <button class="btn" data-sqread="${t.id}|-1"${r ? '' : ' disabled'} aria-label="회독 1 빼기" title="잘못 눌렀을 때">−1</button>
-      <button class="btn pri" data-sqread="${t.id}|1">회독 완료 +1</button></div>
+      <button class="btn pri" data-sqread="${t.id}|1">회독 완료 +1</button>${sqNavBtn(t.id, 1)}</div>
   </aside>`;
 }
 // 이전/다음 소단원 (단원 경계를 넘어 1-1.1 → 2-3.4 순서). 끝이면 비활성
 const sqStep = (tid, dir) => { const ids = Object.keys(SQLD_TOPICS); return ids[ids.indexOf(tid) + dir] || null; };
 function sqNavBtn(tid, dir) {
   const to = sqStep(tid, dir), lbl = dir < 0 ? '이전' : '다음';
-  return to ? `<button class="btn" data-sqopen="${to}" title="${lbl}: ${esc(sqName(to))} (${dir < 0 ? '←' : '→'})" aria-label="${lbl} 소단원: ${esc(sqName(to))}">${dir < 0 ? '‹' : '›'}</button>`
-    : `<button class="btn" disabled aria-label="${lbl} 소단원 없음">${dir < 0 ? '‹' : '›'}</button>`;
+  return to ? `<button class="btn sqnav" data-sqopen="${to}" title="${lbl}: ${esc(sqName(to))} (${dir < 0 ? '←' : '→'})" aria-label="${lbl} 소단원: ${esc(sqName(to))}">${dir < 0 ? '‹' : '›'}</button>`
+    : `<button class="btn sqnav" disabled aria-label="${lbl} 소단원 없음">${dir < 0 ? '‹' : '›'}</button>`;
 }
 function sqSection(tid, [k, title, ck, empty]) {
   const list = sqList(tid, k), dn = list.filter(x => x.done).length;
