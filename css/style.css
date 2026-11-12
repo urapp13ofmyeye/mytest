@@ -537,6 +537,25 @@ code { font-family: ui-monospace, Consolas, monospace; font-size: .9em; backgrou
 .sqfilter { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 4px 12px; margin-bottom: 10px; }
 .sqfilter .wtabs { margin: 0; }
 
+/* 기출 포도: 큰 송이 (알 하나 = 한 회분, 연도 작게 + 회차) */
+.sqexam { --gs: min(64px, calc((100vw - 96px) / 6)); }
+.bunch.big { padding-top: 30px; }
+.bunch.big .stem { height: 26px; width: 4px; }
+.bunch.big .stem::after { width: 24px; height: 14px; }
+.bunch.big .grow { gap: 4px; }
+.bunch.big .grow + .grow { margin-top: -6px; }
+.grape.big { width: var(--gs); height: var(--gs); display: inline-flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; font-size: 13.5px; line-height: 1.1; }
+.grape.big small { font-size: 9.5px; font-weight: 500; opacity: .75; }
+.grape.big .gbadge { bottom: -2px; right: -3px; }
+.sqexamtip { text-align: center; color: var(--mute); margin-top: 4px; }
+/* 기출 오답 */
+.sqwtags { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 8px; }
+.sqsub { font-size: 12px; color: var(--mute); }
+.sqnoin { flex: 0 0 64px !important; width: 64px; }
+.sqwform select.field { flex: 1 1 110px; min-width: 0; }
+.sqwhint { flex: 1 1 160px; margin-right: auto; color: var(--mute); font-size: 11.5px; }
+textarea.field.sqmemo { margin-top: 0; min-height: 90px; }
+
 /* 잠깐 뜨는 알림 */
 .toast {
   position: fixed; z-index: 40; left: 50%; bottom: calc(84px + env(safe-area-inset-bottom)); max-width: calc(100% - 32px);

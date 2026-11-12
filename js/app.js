@@ -95,6 +95,7 @@ document.addEventListener('change', e => {
 });
 document.addEventListener('input', e => {
   if (e.target.dataset.note) { S.notes[e.target.dataset.note] = e.target.value; save(); }
+  else if (sqInput(e.target)) save();
 });
 document.addEventListener('submit', e => {
   e.preventDefault();

@@ -1,6 +1,7 @@
-/* SQLD 탭: 포도(단원=송이, 소단원=알) · 포도알 패널 · 오답 모아보기 · 노트 가져오기 · 숨김(제목 5번 탭) */
+/* SQLD 탭: 단원 포도(단원=송이, 소단원=알) · 기출 포도(알=회차) · 포도알 패널 · 오답 모아보기 · md 편집 · 숨김(제목 5번 탭) */
 /* ══════════ 상태 도우미 ══════════ */
 let sqOpen = null, sqView = 'grape', sqUnit = 'all', sqOnlyOpen = false, sqEnter = false, sqShown = null, sqTaps = [];
+let sqKeepAdd = null, sqLast = {}; // 기출 오답을 연달아 적을 때: 추가 폼 열어두기 · 마지막 과목/단원 기억
 // S.sqld가 없거나 일부만 있는 예전 데이터도 안전하게
 function SQ() {
   const s = S.sqld || (S.sqld = sqldSeed()), d = sqldSeed();
@@ -13,28 +14,43 @@ const sqReads = tid => SQ().reads[tid] || 0;
 const sqConf = tid => sqList(tid, 'confuse').filter(x => !x.done).length;
 const sqWrong = tid => SQ().wrong.filter(w => w.topic === tid);
 const sqWrongOpen = tid => sqWrong(tid).filter(w => !w.solved).length;
-// 아무것도 안 적은 소단원(항목·오답 없음)
-const sqEmpty = tid => !SQLD_SECTS.some(([k]) => sqList(tid, k).length) && !sqWrong(tid).length;
+// 기출 회차: id 'e47'
+const isExam = id => /^e\d+$/.test(id);
+const SQEX = Object.fromEntries(SQLD_EXAMS.map(e => [e.id, e]));
+const sqEWrong = eid => SQ().ewrong.filter(w => w.exam === eid);
+const sqEOpen = eid => sqEWrong(eid).filter(w => !w.solved).length;
+const sqUnitName = id => { const u = SQLD_UNITS.find(x => x.id === id); return u ? `${u.id.slice(-1)}. ${u.name}` : ''; };
+// 아무것도 안 적은 포도알 (소단원: 항목·예전 오답 없음 / 기출: 오답·메모 없음)
+const sqEmpty = id => isExam(id) ? !sqEWrong(id).length && !(SQ().memo[id] || '').trim()
+  : !SQLD_SECTS.some(([k]) => sqList(id, k).length) && !sqWrong(id).length;
 // 알 색: 회독 수. 회독 0회인데 적은 것도 없으면 빈 알(점선)
 const sqLv = tid => sqReads(tid) ? 'gr' + Math.min(sqReads(tid), 3) : sqEmpty(tid) ? 'gr0 empty' : 'gr0';
 const sqIds = u => u.topics.map((_, i) => u.id + '.' + (i + 1));
-const sqName = tid => { const t = SQLD_TOPICS[tid]; return t ? t.unit + ' · ' + t.name : '삭제된 소단원'; };
+const sqName = tid => { if (isExam(tid)) return SQEX[tid] ? `제${SQEX[tid].n}회 기출` : '없는 회차'; const t = SQLD_TOPICS[tid]; return t ? t.unit + ' · ' + t.name : '삭제된 소단원'; };
 // **굵게**, `코드`만 표시 (나머지는 그대로 글자)
 const sqFmt = s => esc(s).replace(/`([^`\n]+)`/g, '<code>$1</code>').replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
 
 /* ══════════ 렌더: SQLD ══════════ */
 function renderSqld() {
-  const open = SQ().wrong.filter(w => !w.solved).length;
-  const html = `<div class="stabs" style="--c:var(--g2)"><button data-sqview="grape" class="${sqView === 'grape' ? 'on' : ''}">🍇 SQLD</button><button data-sqview="wrong" class="${sqView === 'wrong' ? 'on' : ''}">📝 오답 모아보기${open ? ` (${open})` : ''}</button></div>`
-    + (sqView === 'wrong' ? sqWrongView() : sqGrapeView()) + (sqOpen ? sqPanel() : '');
+  const s = SQ(), open = s.wrong.filter(w => !w.solved).length + s.ewrong.filter(w => !w.solved).length;
+  const tab = (v, l) => `<button data-sqview="${v}" class="${sqView === v ? 'on' : ''}">${l}</button>`;
+  const html = `<div class="stabs" style="--c:var(--g2)">${tab('grape', '🍇 SQLD')}${tab('exam', '🍇 기출')}${tab('wrong', `📝 오답 모아보기${open ? ` (${open})` : ''}`)}</div>`
+    + (sqView === 'wrong' ? sqWrongView() : sqView === 'exam' ? sqExamView() : sqGrapeView()) + (sqOpen ? sqPanel() : '');
   sqEnter = false;
   return html;
 }
+// 색 안내 (기출은 헷갈림 점 없음)
+const sqKey = (dot, word) => `<span class="sqkey" aria-label="색 안내"><span><i class="grape mini gr0 empty"></i>빈 칸</span><span><i class="grape mini gr0"></i>0회</span><span><i class="grape mini gr1"></i>1회</span><span><i class="grape mini gr2"></i>2회</span><span><i class="grape mini gr3"></i>3회+ ${word}</span>
+  ${dot ? '<span><i class="gdot"></i>헷갈림 남음</span>' : ''}<span><i class="gbadge">2</i>미해결 오답</span></span>`;
+// 송이 줄 나누기: 위가 넓은 역삼각형 (예: 8개 → 4·3·1, 18개 → 6·5·4·3)
+function sqRows(ids) {
+  const rows = []; let k = 1; while (k * (k + 1) / 2 < ids.length) k++;
+  for (let i = 0, w = k; i < ids.length; i += w, w--) rows.push(ids.slice(i, i + w));
+  return rows;
+}
 function sqGrapeView() {
   const all = Object.keys(SQLD_TOPICS), read = all.filter(sqReads).length;
-  return `<div class="sqtop"><span>회독한 포도알 <b>${read}</b> / ${all.length}</span>
-      <span class="sqkey" aria-label="색 안내"><span><i class="grape mini gr0 empty"></i>빈 칸</span><span><i class="grape mini gr0"></i>0회</span><span><i class="grape mini gr1"></i>1회</span><span><i class="grape mini gr2"></i>2회</span><span><i class="grape mini gr3"></i>3회+</span>
-      <span><i class="gdot"></i>헷갈림 남음</span><span><i class="gbadge">2</i>미해결 오답</span></span></div>
+  return `<div class="sqtop"><span>회독한 포도알 <b>${read}</b> / ${all.length}</span>${sqKey(true, '회독')}</div>
     <div class="sqgrid">${SQLD_UNITS.map(sqBunch).join('')}</div>
     <div class="sect">📝 md로 한꺼번에 편집</div>
     <details class="card sqimport"><summary>md 붙여넣기 · 지금 내용 복사</summary>
@@ -55,11 +71,9 @@ function sqGrapeView() {
       </form></details>
     <div class="sqhide"><button class="linkbtn" data-sqhide="1">SQLD 탭 숨기기</button></div>`;
 }
-// 송이 하나: 위가 넓은 역삼각형으로 알을 쌓음 (예: 8개 → 4·3·1)
+// 단원 송이 하나
 function sqBunch(u) {
-  const ids = sqIds(u), rows = [];
-  let k = 1; while (k * (k + 1) / 2 < ids.length) k++;
-  for (let i = 0, w = k; i < ids.length; i += w, w--) rows.push(ids.slice(i, i + w));
+  const ids = sqIds(u), rows = sqRows(ids);
   return `<div class="card squnit">
     <h3><span class="sqid">${u.id}</span>${esc(u.name)}<small>회독 ${ids.filter(sqReads).length}/${ids.length}</small></h3>
     <div class="bunch"><span class="stem" aria-hidden="true"></span>${rows.map(r => `<div class="grow">${r.map(sqGrape).join('')}</div>`).join('')}</div>
@@ -72,31 +86,106 @@ function sqGrape(tid) {
   return `<button class="grape ${sqLv(tid)}${sqOpen === tid ? ' on' : ''}" data-sqopen="${tid}" aria-label="${esc(desc)}" title="${esc(desc)}">${t.n}${c ? '<i class="gdot"></i>' : ''}${w ? `<i class="gbadge">${w}</i>` : ''}</button>`;
 }
 
+/* ── 기출 포도: 포도알 1개 = 한 회분 ── */
+function sqExamView() {
+  const ids = SQLD_EXAMS.map(e => e.id), done = ids.filter(sqReads).length, op = SQ().ewrong.filter(w => !w.solved).length;
+  return `<div class="sqtop"><span>푼 회차 <b>${done}</b> / ${ids.length}</span>${sqKey(false, '풀이')}</div>
+    <div class="card squnit sqexam">
+      <h3>기출 ${SQLD_EXAMS[0].n}~${SQLD_EXAMS[ids.length - 1].n}회<small>풀이 ${done}/${ids.length}${op ? ` · 미해결 오답 ${op}` : ''}</small></h3>
+      <div class="bunch big"><span class="stem" aria-hidden="true"></span>${sqRows(ids).map(r => `<div class="grow">${r.map(sqExamGrape).join('')}</div>`).join('')}</div>
+      <div class="tip sqexamtip">회차를 눌러 오답 노트와 메모를 적어요. 색은 푼 횟수예요.</div>
+    </div>`;
+}
+function sqExamGrape(eid) {
+  const e = SQEX[eid], w = sqEOpen(eid);
+  const desc = `제${e.n}회 (${e.y}년 ${e.m}월) · ${sqEmpty(eid) ? '아직 기록 없음' : `풀이 ${sqReads(eid)}회`}${w ? ` · 미해결 오답 ${w}개` : ''}`;
+  return `<button class="grape big ${sqLv(eid)}${sqOpen === eid ? ' on' : ''}" data-sqopen="${eid}" aria-label="${esc(desc)}" title="${esc(desc)}"><small>${e.y}</small>${e.n}회${w ? `<i class="gbadge">${w}</i>` : ''}</button>`;
+}
+
 /* ── 포도알 패널 (넓은 화면: 오른쪽, 폰: 아래 시트) ── */
 function sqPanel() {
+  if (isExam(sqOpen)) {
+    const e = SQEX[sqOpen]; if (!e) { sqOpen = null; return ''; }
+    return sqShell(e.id, `${e.y}년 ${e.m}월 시행`, `제${e.n}회 기출`, sqExamBody(e), '풀이');
+  }
   const t = SQLD_TOPICS[sqOpen]; if (!t) { sqOpen = null; return ''; }
-  const u = SQLD_UNITS.find(x => x.id === t.unit), r = sqReads(t.id);
+  const u = SQLD_UNITS.find(x => x.id === t.unit);
+  return sqShell(t.id, `${u.id} ${esc(u.name)} · ${t.n}번`, esc(t.name), `
+      ${SQLD_SECTS.map(s => sqSection(t.id, s)).join('')}
+      ${sqUnitWrong(t.id)}
+      <div class="sqhide"><button class="linkbtn" data-sqcopy="${t.id}">📋 이 소단원 md로 복사</button></div>`, '회독');
+}
+// 패널 틀: 머리(제목·닫기) · 본문 · 바닥(이전 · 횟수 −1/+1 · 다음). word = '회독' | '풀이'
+function sqShell(id, sub, title, body, word) {
+  const r = sqReads(id);
   return `<button class="sqback" data-sqclose="1" tabindex="-1" aria-label="패널 닫기"></button>
   <aside class="sqpanel${sqEnter ? ' enter' : ''}" role="dialog" aria-modal="true" aria-labelledby="sqptitle">
-    <div class="sqphead"><i class="grape mini ${sqLv(t.id)}" aria-hidden="true"></i><div><small>${u.id} ${esc(u.name)} · ${t.n}번</small><h2 id="sqptitle">${esc(t.name)}</h2></div>
+    <div class="sqphead"><i class="grape mini ${sqLv(id)}" aria-hidden="true"></i><div><small>${sub}</small><h2 id="sqptitle">${title}</h2></div>
       <button class="x sqclose" data-sqclose="1" aria-label="패널 닫기">✕</button></div>
-    <div class="sqbody">
-      ${SQLD_SECTS.map(s => sqSection(t.id, s)).join('')}
-      ${sqWrongSection(t.id)}
-      <div class="sqhide"><button class="linkbtn" data-sqcopy="${t.id}">📋 이 소단원 md로 복사</button></div>
-    </div>
-    <div class="sqfoot">${sqNavBtn(t.id, -1)}<span>회독 <b>${r}</b>회</span>
-      <button class="btn" data-sqread="${t.id}|-1"${r ? '' : ' disabled'} aria-label="회독 1 빼기" title="잘못 눌렀을 때">−1</button>
-      <button class="btn pri" data-sqread="${t.id}|1">회독 완료 +1</button>${sqNavBtn(t.id, 1)}</div>
+    <div class="sqbody">${body}</div>
+    <div class="sqfoot">${sqNavBtn(id, -1)}<span>${word} <b>${r}</b>회</span>
+      <button class="btn" data-sqread="${id}|-1"${r ? '' : ' disabled'} aria-label="${word} 1 빼기" title="잘못 눌렀을 때">−1</button>
+      <button class="btn pri" data-sqread="${id}|1">${word} 완료 +1</button>${sqNavBtn(id, 1)}</div>
   </aside>`;
 }
-// 이전/다음 소단원 (단원 경계를 넘어 1-1.1 → 2-3.4 순서). 끝이면 비활성
-const sqStep = (tid, dir) => { const ids = Object.keys(SQLD_TOPICS); return ids[ids.indexOf(tid) + dir] || null; };
-function sqNavBtn(tid, dir) {
-  const to = sqStep(tid, dir), lbl = dir < 0 ? '이전' : '다음';
-  return to ? `<button class="btn sqnav" data-sqopen="${to}" title="${lbl}: ${esc(sqName(to))} (${dir < 0 ? '←' : '→'})" aria-label="${lbl} 소단원: ${esc(sqName(to))}">${dir < 0 ? '‹' : '›'}</button>`
-    : `<button class="btn sqnav" disabled aria-label="${lbl} 소단원 없음">${dir < 0 ? '‹' : '›'}</button>`;
+// 이전/다음 (소단원은 단원 경계를 넘어 1-1.1 → 2-3.4, 기출은 45 → 62회). 끝이면 비활성
+const sqStep = (id, dir) => { const ids = isExam(id) ? SQLD_EXAMS.map(e => e.id) : Object.keys(SQLD_TOPICS); return ids[ids.indexOf(id) + dir] || null; };
+function sqNavBtn(id, dir) {
+  const to = sqStep(id, dir), lbl = dir < 0 ? '이전' : '다음', what = isExam(id) ? '회차' : '소단원';
+  return to ? `<button class="btn sqnav" data-sqopen="${to}" title="${lbl}: ${esc(sqName(to))} (${dir < 0 ? '←' : '→'})" aria-label="${lbl} ${what}: ${esc(sqName(to))}">${dir < 0 ? '‹' : '›'}</button>`
+    : `<button class="btn sqnav" disabled aria-label="${lbl} ${what} 없음">${dir < 0 ? '‹' : '›'}</button>`;
 }
+
+/* ── 기출 패널 본문: 오답 노트 + 메모 ── */
+function sqExamBody(e) {
+  const ws = sqEWrong(e.id).sort((a, b) => (+a.no || 999) - (+b.no || 999)), op = ws.filter(w => !w.solved).length;
+  const keep = sqKeepAdd === e.id;
+  return `<div class="sect">오답 노트${ws.length ? `<small>미해결 ${op}/${ws.length}</small>` : ''}</div>
+    <div class="sqsect">${ws.map(w => sqEWCard(w, false)).join('')}
+      <details class="sqwadd"${!ws.length || keep ? ' open' : ''}><summary>＋ 오답 추가</summary>${sqEWForm(e.id, null, keep && !editing)}</details></div>
+    <div class="sect">메모</div>
+    <textarea class="field sqmemo" data-sqmemo="${e.id}" placeholder="점수, 시간 배분, 이 회차 총평 등 (자동 저장)" aria-label="제${e.n}회 메모">${esc(SQ().memo[e.id] || '')}</textarea>`;
+}
+// 단원 고르기: 과목을 고르면 그 과목 단원만, 안 고르면 과목별로 묶어서 전부
+function sqUnitOpts(subj, unit) {
+  const opt = u => `<option value="${u.id}"${u.id === unit ? ' selected' : ''}>${esc(sqUnitName(u.id))}</option>`;
+  return '<option value="">단원 선택</option>' + (subj ? SQLD_UNITS.filter(u => u.id[0] === subj).map(opt).join('')
+    : Object.keys(SQLD_SUBJ).map(k => `<optgroup label="${k}과목">${SQLD_UNITS.filter(u => u.id[0] === k).map(opt).join('')}</optgroup>`).join(''));
+}
+function sqEWForm(eid, w, focus) {
+  const f = w || { subj: sqLast.subj || '', unit: sqLast.unit || '' };
+  return `<form class="sqwform" data-sqew="${eid}"${w ? ` data-sqwid="${w.id}"` : ''}>
+    <div class="sqwrow">
+      <input class="field sqnoin" name="no" value="${esc(f.no || '')}" inputmode="numeric" maxlength="3" placeholder="번호" aria-label="문제 번호" data-sqno="1"${focus || w ? ' data-editfocus' : ''}>
+      <select class="field" name="subj" data-sqsubj="1" aria-label="과목"><option value="">과목</option>${Object.keys(SQLD_SUBJ).map(k => `<option value="${k}"${f.subj === k ? ' selected' : ''}>${k}과목</option>`).join('')}</select>
+      <select class="field" name="unit" data-squnitsel="1" aria-label="단원">${sqUnitOpts(f.subj, f.unit)}</select>
+    </div>
+    <textarea class="field" name="memo" rows="3" placeholder="메모 (왜 틀렸는지, 헷갈린 개념, 정답 근거…)" aria-label="메모">${esc(f.memo || '')}</textarea>
+    <div class="sqwrow"><span class="tip sqwhint">번호를 적으면 과목이 자동으로 골라져요 (1~10번 1과목)</span>
+      ${w ? '<button type="button" class="btn" data-canceledit="1">취소</button><button class="btn pri">저장</button>' : '<button class="btn pri">추가</button>'}</div>
+  </form>`;
+}
+function sqEWCard(w, showExam) {
+  if (editing === 'sqe:' + w.id) return sqEWForm(w.exam, w);
+  const e = SQEX[w.exam];
+  return `<div class="sqw${w.solved ? ' done' : ''}">
+    <label class="sqwck"><input type="checkbox" data-sqesolved="${w.id}"${w.solved ? ' checked' : ''}>해결</label>
+    <div class="sqwbody">
+      <div class="sqwtags">${showExam && e ? `<button class="sqtopic" data-sqopen="${e.id}">${e.n}회 ›</button>` : ''}<b>${w.no ? esc(w.no) + '번' : '번호 없음'}</b>
+        ${w.subj || w.unit ? `<span class="sqsub">${w.subj ? w.subj + '과목' : ''}${w.unit ? ' · ' + esc(sqUnitName(w.unit)) : ''}</span>` : ''}</div>
+      ${w.memo ? `<div class="sqwhy">${sqFmt(w.memo)}</div>` : ''}
+    </div>
+    <div class="sqact"><button class="x" data-sqewedit="${w.id}" title="수정" aria-label="오답 수정">✎</button><button class="x" data-sqewdel="${w.id}" aria-label="오답 삭제">×</button></div>
+  </div>`;
+}
+// 소단원 패널 아래: 같은 단원의 기출 오답 + (있으면) 예전 오답 메모
+function sqUnitWrong(tid) {
+  const t = SQLD_TOPICS[tid], ew = SQ().ewrong.filter(w => w.unit === t.unit).sort(sqEWOrder), old = sqWrong(tid);
+  return `<div class="sect">${t.unit} 단원 기출 오답${ew.length ? `<small>미해결 ${ew.filter(w => !w.solved).length}/${ew.length}</small>` : ''}</div>
+    ${ew.length ? `<div class="sqsect">${ew.map(w => sqEWCard(w, true)).join('')}</div>` : '<div class="tip sqempty" style="padding:0">🍇 기출 탭에서 회차를 눌러 오답을 적으면 단원별로 여기에 모여요.</div>'}
+    ${old.length ? `<div class="sect">예전 오답 메모<small>기출 포도로 옮긴 뒤 지워주세요</small></div><div class="sqsect">${old.map(w => sqWrongCard(w, false)).join('')}</div>` : ''}`;
+}
+const sqEWOrder = (a, b) => (+b.exam.slice(1)) - (+a.exam.slice(1)) || (+a.no || 999) - (+b.no || 999); // 최근 회차 먼저, 번호순
 function sqSection(tid, [k, title, ck, empty]) {
   const list = sqList(tid, k), dn = list.filter(x => x.done).length;
   const cnt = !list.length ? '' : ck ? `${ck} ${dn}/${list.length}` : (list.length - dn ? `아직 헷갈림 ${list.length - dn}` : '모두 해결');
@@ -114,12 +203,7 @@ function sqSection(tid, [k, title, ck, empty]) {
       <form class="addrow" data-sqadd="${tid}|${k}"><input name="t" placeholder="${title} 추가" aria-label="${title} 추가" required><button class="btn" aria-label="${title} 추가">＋</button></form>
     </div>`;
 }
-function sqWrongSection(tid) {
-  const ws = sqWrong(tid), op = ws.filter(w => !w.solved).length;
-  return `<div class="sect">오답 메모${ws.length ? `<small>미해결 ${op}/${ws.length}</small>` : ''}</div>
-    <div class="sqsect">${ws.map(w => sqWrongCard(w, false)).join('')}
-      <details class="sqwadd"${ws.length ? '' : ' open'}><summary>＋ 오답 추가</summary>${sqWrongForm(tid)}</details></div>`;
-}
+// 예전(단원 포도) 오답: 새로 추가는 안 하고, 옮기기 전까지 보기·수정·삭제만
 function sqWrongForm(tid, w) {
   const f = w || {}, val = k => esc(f[k] || '');
   return `<form class="sqwform" data-sqwrong="${tid}"${w ? ` data-sqwid="${w.id}"` : ''}>
@@ -146,24 +230,28 @@ function sqWrongCard(w, showTopic) {
 }
 
 /* ── 오답 모아보기 ── */
+// 기출 오답(회차별) + 예전 오답(단원 포도)을 단원별로 걸러 봄
 function sqWrongView() {
-  const s = SQ(), unitOf = w => (SQLD_TOPICS[w.topic] || {}).unit;
+  const s = SQ(), oldUnit = w => (SQLD_TOPICS[w.topic] || {}).unit;
   if (sqUnit !== 'all' && !SQLD_UNITS.some(u => u.id === sqUnit)) sqUnit = 'all';
-  const cnt = u => s.wrong.filter(w => !w.solved && (u === 'all' || unitOf(w) === u)).length;
-  const ws = s.wrong.slice().reverse().filter(w => (sqUnit === 'all' || unitOf(w) === sqUnit) && (!sqOnlyOpen || !w.solved));
+  const pass = (w, u) => (sqUnit === 'all' || u === sqUnit) && (!sqOnlyOpen || !w.solved);
+  const cnt = u => s.ewrong.filter(w => !w.solved && (u === 'all' || w.unit === u)).length + s.wrong.filter(w => !w.solved && (u === 'all' || oldUnit(w) === u)).length;
+  const ew = s.ewrong.filter(w => pass(w, w.unit)).sort(sqEWOrder), old = s.wrong.slice().reverse().filter(w => pass(w, oldUnit(w)));
+  const any = s.ewrong.length + s.wrong.length;
   return `<div class="sqfilter"><div class="wtabs">${['all', ...SQLD_UNITS.map(u => u.id)].map(u =>
       `<button data-squnit="${u}" class="${sqUnit === u ? 'on' : ''}">${u === 'all' ? '전체' : u}${cnt(u) ? ` · ${cnt(u)}` : ''}</button>`).join('')}</div>
     <label class="optck"><input type="checkbox" data-sqonly="1"${sqOnlyOpen ? ' checked' : ''}>미해결만 보기</label></div>
-    ${ws.length ? `<div class="card sqwlist">${ws.map(w => sqWrongCard(w, true)).join('')}</div>`
-      : `<div class="card tip">${s.wrong.length ? '조건에 맞는 오답이 없어요.' : '아직 오답이 없어요. 포도알을 눌러 오답 메모를 남겨보세요.'}</div>`}
-    <div class="tip" style="margin-top:8px;color:var(--mute)">숫자는 미해결 오답 수예요. 소단원 이름을 누르면 그 포도알이 열려요.</div>`;
+    ${ew.length ? `<div class="card sqwlist">${ew.map(w => sqEWCard(w, true)).join('')}</div>` : ''}
+    ${old.length ? `<div class="sect">예전 오답 메모 (단원 포도)<small style="font-weight:500;color:var(--mute);margin-left:6px">기출 포도로 옮긴 뒤 지워주세요</small></div><div class="card sqwlist">${old.map(w => sqWrongCard(w, true)).join('')}</div>` : ''}
+    ${ew.length || old.length ? '' : `<div class="card tip">${any ? '조건에 맞는 오답이 없어요.' : '아직 오답이 없어요. 🍇 기출 탭에서 회차를 눌러 오답을 적어보세요.'}</div>`}
+    <div class="tip" style="margin-top:8px;color:var(--mute)">칩의 숫자는 미해결 오답 수예요. 회차를 누르면 그 기출 포도알이 열려요. 단원을 안 고른 오답은 「전체」에서만 보여요.</div>`;
 }
 
 /* ══════════ 이벤트 (app.js의 위임에서 호출) ══════════ */
 const sqFind = (tid, k, id) => sqList(tid, k).find(x => x.id === id);
 // 처리했으면 true. 아무것도 안 바뀌었으면(취소 등) 'skip'
 function sqClick(d) {
-  if (d.sqopen) { sqEnter = !sqOpen; sqOpen = d.sqopen; editing = null; }
+  if (d.sqopen) { sqEnter = !sqOpen; sqOpen = d.sqopen; editing = null; sqKeepAdd = null; }
   else if (d.sqclose) { sqOpen = null; editing = null; }
   else if (d.sqview) { sqView = d.sqview; editing = null; window.scrollTo(0, 0); }
   else if (d.squnit) sqUnit = d.squnit;
@@ -172,7 +260,12 @@ function sqClick(d) {
   else if (d.sqdel) { const [tid, k, id] = d.sqdel.split('|'); SQ().items[tid][k] = sqList(tid, k).filter(x => x.id !== id); }
   else if (d.sqwedit) editing = 'sqw:' + d.sqwedit;
   else if (d.sqwdel) { if (!confirm('이 오답 메모를 지울까요?')) return 'skip'; SQ().wrong = SQ().wrong.filter(w => w.id !== d.sqwdel); }
-  else if (d.sqread) { const [tid, n] = d.sqread.split('|'); SQ().reads[tid] = Math.max(0, sqReads(tid) + +n); if (+n > 0) toast(`🍇 ${SQLD_TOPICS[tid].name} ${sqReads(tid)}회독 완료`); }
+  else if (d.sqewedit) editing = 'sqe:' + d.sqewedit;
+  else if (d.sqewdel) { if (!confirm('이 오답을 지울까요?')) return 'skip'; SQ().ewrong = SQ().ewrong.filter(w => w.id !== d.sqewdel); }
+  else if (d.sqread) {
+    const [id, n] = d.sqread.split('|'); SQ().reads[id] = Math.max(0, sqReads(id) + +n);
+    if (+n > 0) toast(isExam(id) ? `🍇 제${SQEX[id].n}회 ${sqReads(id)}번째 풀이 완료` : `🍇 ${SQLD_TOPICS[id].name} ${sqReads(id)}회독 완료`);
+  }
   else if (d.sqcopy) { // 복사만 하고 화면은 그대로
     const ids = d.sqcopy === 'all' ? Object.keys(SQLD_TOPICS).filter(t => SQLD_SECTS.some(([k]) => sqList(t, k).length)) : [d.sqcopy];
     if (ids.length) sqCopy(sqMd(ids)); else toast('아직 적은 내용이 없어요');
@@ -185,9 +278,26 @@ function sqClick(d) {
 function sqChange(d, el) {
   if (d.sqck) { const [tid, k, id] = d.sqck.split('|'), x = sqFind(tid, k, id); if (x) x.done = el.checked; }
   else if (d.sqsolved) { const w = SQ().wrong.find(x => x.id === d.sqsolved); if (w) w.solved = el.checked; }
+  else if (d.sqesolved) { const w = SQ().ewrong.find(x => x.id === d.sqesolved); if (w) w.solved = el.checked; }
   else if (d.sqonly) sqOnlyOpen = el.checked;
+  // 기출 오답 폼: 과목 ↔ 단원 맞추기 (입력 중인 폼이라 다시 그리지 않고 그 자리에서 바꿈)
+  else if (d.sqsubj) { const u = el.form.elements.unit; u.innerHTML = sqUnitOpts(el.value, u.value[0] === el.value ? u.value : ''); return false; }
+  else if (d.squnitsel) { if (el.value) sqSetSubj(el.form, el.value[0]); return false; }
   else return false;
   return true;
+}
+function sqSetSubj(form, subj) {
+  const s = form.elements.subj, u = form.elements.unit;
+  if (s.value === subj) return;
+  const keep = u.value[0] === subj ? u.value : '';
+  s.value = subj; u.innerHTML = sqUnitOpts(subj, keep);
+}
+// 입력할 때마다: 기출 메모는 저장(다시 그리지 않음), 문제 번호는 과목 자동 선택. 저장할 게 있으면 true
+function sqInput(el) {
+  const d = el.dataset;
+  if (d.sqmemo) { SQ().memo[d.sqmemo] = el.value; return true; }
+  if (d.sqno) { const n = parseInt(el.value, 10); if (n >= 1 && n <= 50) sqSetSubj(el.form, n <= 10 ? '1' : '2'); }
+  return false;
 }
 // false면 저장·다시 그리기를 하지 않음 (입력 내용 유지)
 function sqSubmit(f, d) {
@@ -198,6 +308,15 @@ function sqSubmit(f, d) {
     const vals = { q: v('q'), mine: v('mine'), ans: v('ans'), why: v('why'), src: v('src') };
     const w = d.sqwid && SQ().wrong.find(x => x.id === d.sqwid);
     if (w) Object.assign(w, vals); else SQ().wrong.push(Object.assign({ id: uid(), topic: d.sqwrong, solved: false }, vals));
+    editing = null;
+  }
+  else if (d.sqew) {
+    const vals = { no: v('no').replace(/\D/g, ''), subj: v('subj'), unit: v('unit'), memo: v('memo') };
+    if (vals.unit && !vals.subj) vals.subj = vals.unit[0];
+    if (!vals.no && !vals.unit && !vals.memo) { alert('번호·단원·메모 중 하나는 적어주세요.'); return false; }
+    const w = d.sqwid && SQ().ewrong.find(x => x.id === d.sqwid);
+    if (w) Object.assign(w, vals);
+    else { SQ().ewrong.push(Object.assign({ id: uid(), exam: d.sqew, solved: false }, vals)); sqKeepAdd = d.sqew; sqLast = { subj: vals.subj, unit: vals.unit }; }
     editing = null;
   }
   else if ('sqimport' in d) return sqImport(f.elements.md.value, f.elements.mode.value);
@@ -221,7 +340,7 @@ document.addEventListener('keydown', e => {
   // ← → 로 이전/다음 소단원 (입력 중일 땐 무시)
   if ((e.key === 'ArrowLeft' || e.key === 'ArrowRight') && !(e.target.closest && e.target.closest('input, textarea, select')) && !e.altKey && !e.ctrlKey && !e.metaKey) {
     const to = sqStep(sqOpen, e.key === 'ArrowLeft' ? -1 : 1);
-    if (to) { sqOpen = to; editing = null; render(); }
+    if (to) { sqOpen = to; editing = null; sqKeepAdd = null; render(); }
   }
 });
 // 다시 그릴 때 패널 스크롤 유지 · 뒤 화면 스크롤 잠금 · 열릴 때 닫기 버튼에 포커스 (app.js render에서 호출)
